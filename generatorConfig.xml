@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration
+  PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+  "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+
+<generatorConfiguration>
+	<context id="testTables" targetRuntime="MyBatis3">
+		<commentGenerator>
+			<!-- 是否去除自动生成的注释 true：是 ： false:否 -->
+			<property name="suppressAllComments" value="true" />
+		</commentGenerator>
+		<!--数据库连接的信息：驱动类、连接地址、用户名、密码 -->
+		<jdbcConnection driverClass="com.mysql.cj.jdbc.Driver"
+			connectionURL="jdbc:mysql://localhost:3306/grademanagement?serverTimezone=UTC" userId="root"
+			password="root123">
+			<property name="nullCatalogMeansCurrent" value="true" />
+		</jdbcConnection>
+		<!-- <jdbcConnection driverClass="oracle.jdbc.OracleDriver"
+			connectionURL="jdbc:oracle:thin:@127.0.0.1:1521:yycg" 
+			userId="yycg"
+			password="yycg">
+		</jdbcConnection> -->
+
+		<!-- 默认false，把JDBC DECIMAL 和 NUMERIC 类型解析为 Integer，为 true时把JDBC DECIMAL 和 
+			NUMERIC 类型解析为java.math.BigDecimal -->
+		<javaTypeResolver>
+			<property name="forceBigDecimals" value="true" />
+		</javaTypeResolver>
+
+		<!-- targetProject:生成PO类的位置 -->
+		<javaModelGenerator targetPackage="edu.uni.grademanagement.bean"
+			targetProject=".\src\main\java">
+			<!-- enableSubPackages:是否让schema作为包的后缀 -->
+			<property name="enableSubPackages" value="false" />
+			<!-- 从数据库返回的值被清理前后的空格 -->
+			<property name="trimStrings" value="true" />
+		</javaModelGenerator>
+        <!-- targetProject:mapper映射文件生成的位置 -->
+		<sqlMapGenerator targetPackage="mybatis.mapper.grademanagement"
+			targetProject=".\src\main\resources">
+			<!-- enableSubPackages:是否让schema作为包的后缀 -->
+			<property name="enableSubPackages" value="false" />
+		</sqlMapGenerator>
+		<!-- targetPackage：mapper接口生成的位置 -->
+		<javaClientGenerator type="XMLMAPPER"
+			targetPackage="edu.uni.grademanagement.mapper"
+			targetProject=".\src\main\java">
+			<!-- enableSubPackages:是否让schema作为包的后缀 -->
+			<property name="enableSubPackages" value="false" />
+		</javaClientGenerator>
+		<!-- 指定数据库表 -->
+		<!--<table schema="" tableName="course_item">-->
+			<!--&lt;!&ndash; 获取自增主键 &ndash;&gt;-->
+			<!--<generatedKey column="id" sqlStatement="MySql" identity="true"/>-->
+			<!--&lt;!&ndash; 指定java类型 &ndash;&gt;-->
+			<!--<columnOverride column="deleted" javaType="java.lang.Integer" jdbcType="TINYINT" />-->
+			<!--<columnOverride column="name" javaType="java.lang.Integer" jdbcType="TINYINT" />-->
+		<!--</table>-->
+		<!--<table schema="" tableName="course_item_detail">-->
+			<!--&lt;!&ndash; 获取自增主键 &ndash;&gt;-->
+			<!--<generatedKey column="id" sqlStatement="MySql" identity="true"/>-->
+			<!--&lt;!&ndash; 指定java类型 &ndash;&gt;-->
+			<!--<columnOverride column="deleted" javaType="java.lang.Integer" jdbcType="TINYINT" />-->
+		<!--</table>-->
+		<!--<table schema="" tableName="grade_item_attachment">-->
+			<!--&lt;!&ndash; 获取自增主键 &ndash;&gt;-->
+			<!--<generatedKey column="id" sqlStatement="MySql" identity="true"/>-->
+			<!--&lt;!&ndash; 指定java时间类型 &ndash;&gt;-->
+			<!--&lt;!&ndash;<columnOverride column="datetime" javaType="java.time.LocalDate" jdbcType="DATETIME" />&ndash;&gt;-->
+		<!--</table>-->
+		<!--<table schema="" tableName="grade_refuse">-->
+			<!--&lt;!&ndash; 获取自增主键 &ndash;&gt;-->
+			<!--<generatedKey column="id" sqlStatement="MySql" identity="true"/>-->
+			<!--&lt;!&ndash; 指定java类型 &ndash;&gt;-->
+			<!--<columnOverride column="application_status" javaType="java.lang.Integer" jdbcType="TINYINT" />-->
+		<!--</table>-->
+		<table schema="" tableName="stu_grade_main">
+			<!-- 获取自增主键 -->
+			<generatedKey column="id" sqlStatement="MySql" identity="true"/>
+			<!-- 指定java类型 -->
+			<columnOverride column="state" javaType="java.lang.Integer" jdbcType="TINYINT" />
+			<columnOverride column="cache" javaType="java.lang.Integer" jdbcType="TINYINT" />
+			<columnOverride column="deleted" javaType="java.lang.Integer" jdbcType="TINYINT" />
+		</table>
+		<table schema="" tableName="stu_item_grade">
+			<!-- 获取自增主键 -->
+			<generatedKey column="id" sqlStatement="MySql" identity="true"/>
+			<columnOverride column="cache" javaType="java.lang.Integer" jdbcType="TINYINT" />
+			<!-- 指定java类型 -->
+			<columnOverride column="deleted" javaType="java.lang.Integer" jdbcType="TINYINT" />
+		</table>
+		<table schema="" tableName="stu_item_grade_detail">
+			<!-- 获取自增主键 -->
+			<generatedKey column="id" sqlStatement="MySql" identity="true"/>
+			<columnOverride column="cache" javaType="java.lang.Integer" jdbcType="TINYINT" />
+			<!-- 指定java类型 -->
+			<columnOverride column="deleted" javaType="java.lang.Integer" jdbcType="TINYINT" />
+
+		</table>
+		<!--<table schema="" tableName="teacher_grade_application">-->
+			<!--&lt;!&ndash; 获取自增主键 &ndash;&gt;-->
+			<!--<generatedKey column="id" sqlStatement="MySql" identity="true"/>-->
+			<!--&lt;!&ndash; 指定java类型 &ndash;&gt;-->
+			<!--<columnOverride column="application_status" javaType="java.lang.Integer" jdbcType="TINYINT" />-->
+		<!--</table>-->
+		<!--<table schema="" tableName="user_grade_application">-->
+			<!--&lt;!&ndash; 获取自增主键 &ndash;&gt;-->
+			<!--<generatedKey column="id" sqlStatement="MySql" identity="true"/>-->
+			<!--&lt;!&ndash; 指定java类型 &ndash;&gt;-->
+			<!--<columnOverride column="application_status" javaType="java.lang.Integer" jdbcType="TINYINT" />-->
+
+		<!--</table>-->
+		<!--<table schema="" tableName="user_item_attachment">-->
+			<!--&lt;!&ndash; 获取自增主键 &ndash;&gt;-->
+			<!--<generatedKey column="id" sqlStatement="MySql" identity="true"/>-->
+			<!--&lt;!&ndash; 指定java时间类型 &ndash;&gt;-->
+			<!--&lt;!&ndash;<columnOverride column="datetime" javaType="java.time.LocalDate" jdbcType="DATETIME" />&ndash;&gt;-->
+		<!--</table>-->
+		<!--<table schema="" tableName="gm_apply">-->
+		<!--&lt;!&ndash; 获取自增主键 &ndash;&gt;-->
+		<!--<generatedKey column="id" sqlStatement="MySql" identity="true"/>-->
+		<!--&lt;!&ndash; 指定java类型 &ndash;&gt;-->
+		<!--<columnOverride column="deleted" javaType="java.lang.Integer" jdbcType="TINYINT" />-->
+		<!--</table>-->
+		<!--<table schema="" tableName="gm_apply_approval">-->
+			<!--&lt;!&ndash; 获取自增主键 &ndash;&gt;-->
+			<!--<generatedKey column="id" sqlStatement="MySql" identity="true"/>-->
+			<!--&lt;!&ndash; 指定java类型 &ndash;&gt;-->
+			<!--<columnOverride column="step" javaType="java.lang.Integer" jdbcType="TINYINT" />-->
+			<!--<columnOverride column="application_status" javaType="java.lang.Integer" jdbcType="TINYINT" />-->
+			<!--<columnOverride column="deleted" javaType="java.lang.Integer" jdbcType="TINYINT" />-->
+		<!--</table>-->
+		<!--<table schema="" tableName="gm_apply_attachment">-->
+			<!--&lt;!&ndash; 获取自增主键 &ndash;&gt;-->
+			<!--<generatedKey column="id" sqlStatement="MySql" identity="true"/>-->
+			<!--&lt;!&ndash; 指定java类型 &ndash;&gt;-->
+			<!--<columnOverride column="deleted" javaType="java.lang.Integer" jdbcType="TINYINT" />-->
+		<!--</table>-->
+		
+	</context>
+</generatorConfiguration>

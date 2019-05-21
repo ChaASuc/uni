@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="edu.uni.userBaseInfo1.mapper.AddrAreaMapper" >
+  <resultMap id="BaseResultMap" type="edu.uni.userBaseInfo1.bean.AddrArea" >
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="city_code" property="cityCode" jdbcType="BIGINT" />
+    <result column="area_zh" property="areaZh" jdbcType="CHAR" />
+    <result column="area_en" property="areaEn" jdbcType="CHAR" />
+    <result column="code" property="code" jdbcType="BIGINT" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    id, city_code, area_zh, area_en, code
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="edu.uni.userBaseInfo1.bean.AddrAreaExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from addr_area
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select 
+    <include refid="Base_Column_List" />
+    from addr_area
+    where id = #{id,jdbcType=BIGINT}
+  </select>
+  <select id="selectByCityCode" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select
+    <include refid="Base_Column_List" />
+    from addr_area
+    where city_code = #{city_code,jdbcType=BIGINT}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long" >
+    delete from addr_area
+    where id = #{id,jdbcType=BIGINT}
+  </delete>
+  <delete id="deleteByExample" parameterType="edu.uni.userBaseInfo1.bean.AddrAreaExample" >
+    delete from addr_area
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="edu.uni.userBaseInfo1.bean.AddrArea" >
+    <selectKey resultType="java.lang.Long" keyProperty="id" order="AFTER" >
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into addr_area (city_code, area_zh, area_en, 
+      code)
+    values (#{cityCode,jdbcType=BIGINT}, #{areaZh,jdbcType=CHAR}, #{areaEn,jdbcType=CHAR}, 
+      #{code,jdbcType=BIGINT})
+  </insert>
+  <insert id="insertSelective" parameterType="edu.uni.userBaseInfo1.bean.AddrArea" >
+    <selectKey resultType="java.lang.Long" keyProperty="id" order="AFTER" >
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into addr_area
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="cityCode != null" >
+        city_code,
+      </if>
+      <if test="areaZh != null" >
+        area_zh,
+      </if>
+      <if test="areaEn != null" >
+        area_en,
+      </if>
+      <if test="code != null" >
+        code,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="cityCode != null" >
+        #{cityCode,jdbcType=BIGINT},
+      </if>
+      <if test="areaZh != null" >
+        #{areaZh,jdbcType=CHAR},
+      </if>
+      <if test="areaEn != null" >
+        #{areaEn,jdbcType=CHAR},
+      </if>
+      <if test="code != null" >
+        #{code,jdbcType=BIGINT},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="edu.uni.userBaseInfo1.bean.AddrAreaExample" resultType="java.lang.Integer" >
+    select count(*) from addr_area
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update addr_area
+    <set >
+      <if test="record.id != null" >
+        id = #{record.id,jdbcType=BIGINT},
+      </if>
+      <if test="record.cityCode != null" >
+        city_code = #{record.cityCode,jdbcType=BIGINT},
+      </if>
+      <if test="record.areaZh != null" >
+        area_zh = #{record.areaZh,jdbcType=CHAR},
+      </if>
+      <if test="record.areaEn != null" >
+        area_en = #{record.areaEn,jdbcType=CHAR},
+      </if>
+      <if test="record.code != null" >
+        code = #{record.code,jdbcType=BIGINT},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update addr_area
+    set id = #{record.id,jdbcType=BIGINT},
+      city_code = #{record.cityCode,jdbcType=BIGINT},
+      area_zh = #{record.areaZh,jdbcType=CHAR},
+      area_en = #{record.areaEn,jdbcType=CHAR},
+      code = #{record.code,jdbcType=BIGINT}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="edu.uni.userBaseInfo1.bean.AddrArea" >
+    update addr_area
+    <set >
+      <if test="cityCode != null" >
+        city_code = #{cityCode,jdbcType=BIGINT},
+      </if>
+      <if test="areaZh != null" >
+        area_zh = #{areaZh,jdbcType=CHAR},
+      </if>
+      <if test="areaEn != null" >
+        area_en = #{areaEn,jdbcType=CHAR},
+      </if>
+      <if test="code != null" >
+        code = #{code,jdbcType=BIGINT},
+      </if>
+    </set>
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="edu.uni.userBaseInfo1.bean.AddrArea" >
+    update addr_area
+    set city_code = #{cityCode,jdbcType=BIGINT},
+      area_zh = #{areaZh,jdbcType=CHAR},
+      area_en = #{areaEn,jdbcType=CHAR},
+      code = #{code,jdbcType=BIGINT}
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+</mapper>
