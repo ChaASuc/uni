@@ -1,5 +1,7 @@
 package edu.uni.administrativestructure.bean;
 
+import com.alibaba.excel.annotation.ExcelProperty;
+import com.alibaba.excel.metadata.BaseRowModel;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.util.Date;
@@ -7,49 +9,69 @@ import java.util.Date;
 /**
  * author:黄育林
  * create:2019.5.7
- * modified:2019.5.9
+ * modified:2019.6.13
  * 功能：学校实体类
  */
-public class University {
+public class University extends BaseRowModel {
     //    主id
+    @ExcelProperty(value = "学校id",index = 0)
     private Long id;
     //    学校事业单位编号
+    @ExcelProperty(value = "学校事业单位编号",index = 1)
     private String unitNumber;
     //    统一社会信用代码
+    @ExcelProperty(value = "统一社会信用代码",index = 2)
     private String socialTrustCode;
     //    证书识别码
+    @ExcelProperty(value = "证书识别码",index = 3)
     private String certificationCode;
     //    事证号
+    @ExcelProperty(value = "事证号",index = 4)
     private String enterpriseCode;
     //    学校名称
+    @ExcelProperty(value = "学校名称",index = 5)
     private String name;
     //    英文名
+    @ExcelProperty(value = "学校英文名",index = 6)
     private String ename;
     //    单位状态
+    @ExcelProperty(value = "单位状态",index = 7)
     private Integer status;
     //    经费来源
+    @ExcelProperty(value = "经费来源",index = 8)
     private Integer fundingSources;
     //    设立登记时间
+    @ExcelProperty(value = "设立登记时间",index = 9)
     private Date establishDate;
     //    举办单位
+    @ExcelProperty(value = "举办单位",index = 10)
     private Integer hostedBy;
     //    登记管理机关
+    @ExcelProperty(value = "登记管理机关",index = 11)
     private Integer adminiBy;
     //    开办资金
+    @ExcelProperty(value = "开办资金",index = 12)
     private Integer initialFunding;
     //    证书有效期
+    @ExcelProperty(value = "证书有效期开始时间",index = 13)
     private Date certificationBeginDate;
     //    证书有效期
+    @ExcelProperty(value = "证书有效期截至时间",index = 14)
     private Date certificationEndDate;
     //    电话
+    @ExcelProperty(value = "电话",index = 15)
     private String telephone;
     //    地址
+    @ExcelProperty(value = "学校地址",index = 16)
     private String address;
     //    录入日期
+//    @ExcelProperty(value = "录入日期",index = 17)
     private Date datetime;
     //    录入人
+//    @ExcelProperty(value = "录入人",index = 18)
     private Long byWho;
     //    是否有效
+//    @ExcelProperty(value = "是否有效",index = 19)
     private Boolean deleted;
 
     public Long getId() {

@@ -225,6 +225,66 @@ public class CourseItemExample {
             return (Criteria) this;
         }
 
+        public Criteria andSemesterIdIsNull() {
+            addCriterion("semester_id is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andSemesterIdIsNotNull() {
+            addCriterion("semester_id is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andSemesterIdEqualTo(Long value) {
+            addCriterion("semester_id =", value, "semesterId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSemesterIdNotEqualTo(Long value) {
+            addCriterion("semester_id <>", value, "semesterId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSemesterIdGreaterThan(Long value) {
+            addCriterion("semester_id >", value, "semesterId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSemesterIdGreaterThanOrEqualTo(Long value) {
+            addCriterion("semester_id >=", value, "semesterId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSemesterIdLessThan(Long value) {
+            addCriterion("semester_id <", value, "semesterId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSemesterIdLessThanOrEqualTo(Long value) {
+            addCriterion("semester_id <=", value, "semesterId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSemesterIdIn(List<Long> values) {
+            addCriterion("semester_id in", values, "semesterId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSemesterIdNotIn(List<Long> values) {
+            addCriterion("semester_id not in", values, "semesterId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSemesterIdBetween(Long value1, Long value2) {
+            addCriterion("semester_id between", value1, value2, "semesterId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSemesterIdNotBetween(Long value1, Long value2) {
+            addCriterion("semester_id not between", value1, value2, "semesterId");
+            return (Criteria) this;
+        }
+
         public Criteria andCourseIdIsNull() {
             addCriterion("course_id is null");
             return (Criteria) this;

@@ -1,5 +1,7 @@
 package edu.uni.administrativestructure.bean;
 
+import com.alibaba.excel.annotation.ExcelProperty;
+import com.alibaba.excel.metadata.BaseRowModel;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.util.Date;
@@ -7,25 +9,33 @@ import java.util.Date;
 /**
  * author:黄育林
  * create:2019.5.7
- * modified:2019.5.9
+ * modified:2019.6.13
  * 功能：二级部门实体类
  */
-public class Subdepartment {
+public class Subdepartment extends BaseRowModel {
     //    主id
+    @ExcelProperty(value = "二级部门id",index = 0)
     private Long id;
     //    学校id
+    @ExcelProperty(value = "学校id",index = 1)
     private Long universityId;
     //    部门id
+    @ExcelProperty(value = "部门id",index = 2)
     private Long departmentId;
     //    二级部门名称
+    @ExcelProperty(value = "二级部门名称",index = 3)
     private String name;
     //    部门英文名
+    @ExcelProperty(value = "部门英文名称",index = 4)
     private String ename;
     //    电话
+    @ExcelProperty(value = "电话",index = 5)
     private String telephone;
     //    领导人
+    @ExcelProperty(value = "领导人",index = 6)
     private Long head;
     //    领导办公室
+    @ExcelProperty(value = "领导办公室",index = 7)
     private Long officeRoom;
     //    录入日期
     private Date datetime;

@@ -33,7 +33,7 @@ public class CourseDtoServiceImpl implements CourseDtoService {
     private CourseCategoryMapper courseCategoryMapper;
 
     @Override
-    public CourseDto selectByCourseId(Long courseId) throws SQLException {
+    public CourseDto selectByCourseId(Long courseId){
         CourseDto courseDto = new CourseDto();
         CourseExample courseExample = new CourseExample();
         courseExample.createCriteria()
@@ -44,7 +44,7 @@ public class CourseDtoServiceImpl implements CourseDtoService {
         if (CollectionUtils.isEmpty(courseList)) {
             return null;
         } else if (courseList.size() > 1) {
-            throw new SQLException("课程获取错误");
+            throw new RuntimeException("课程获取错误");
         }
         Course course = courseList.get(0);
         BeanUtils.copyProperties(
@@ -61,7 +61,7 @@ public class CourseDtoServiceImpl implements CourseDtoService {
         if (CollectionUtils.isEmpty(courseSpeciesList)) {
             courseDto.setSpeciesName(null);
         } else if (courseSpeciesList.size() > 1) {
-            throw new SQLException("课程类别获取错误");
+            throw new RuntimeException("课程类别获取错误");
         }else {
             CourseSpecies courseSpecies = courseSpeciesList.get(0);
             courseDto.setSpeciesName(courseSpecies.getName());
@@ -76,7 +76,7 @@ public class CourseDtoServiceImpl implements CourseDtoService {
         if (CollectionUtils.isEmpty(courseCategoryList)) {
             courseDto.setCategoryName(null);
         } else if (courseCategoryList.size() > 1) {
-            throw new SQLException("课程分类获取错误");
+            throw new RuntimeException("课程分类获取错误");
         }else {
             CourseCategory courseCategory = courseCategoryList.get(0);
             courseDto.setCategoryName(courseCategory.getName());
@@ -86,7 +86,7 @@ public class CourseDtoServiceImpl implements CourseDtoService {
     }
 
     @Override
-    public Course selectCourseByCourseId(Long courseId) throws SQLException {
+    public Course selectCourseByCourseId(Long courseId){
 
         CourseExample courseExample = new CourseExample();
         courseExample.createCriteria()
@@ -97,9 +97,40 @@ public class CourseDtoServiceImpl implements CourseDtoService {
         if (CollectionUtils.isEmpty(courseList)) {
             return null;
         } else if (courseList.size() > 1) {
-            throw new SQLException("课程获取错误");
+            throw new RuntimeException("课程获取错误");
         }
         Course course = courseList.get(0);
         return course;
+    }
+
+    @Override
+
+    /**
+     * @Param: [courseNo, courseName]
+     * @Return:boolean
+     * @Author: 陈汉槟
+     * @Date: 2019/6/8 18:55
+     * @Description: 根据课程号和课程名查看是否在
+     */
+    public String selectCourseByCourseNoAndCourseName(String courseNo, String courseName) {
+        CourseExample courseExample = new CourseExample();
+        courseExample.createCriteria()
+                .andNumberEqualTo(courseNo)
+                .andNameEqualTo(courseName);
+        List<Course> courses = courseMapper.selectByExample(courseExample);
+        if (!CollectionUtils.isEmpty(courses)) {
+            return "";
+        }
+        return "课程编号与课程名称不匹配";
+    }
+
+    @Override
+    public List<Course> selectByUniversityId(Long universityId) {
+        CourseExample courseExample = new CourseExample();
+        courseExample.createCriteria()
+                .andUniversityIdEqualTo(universityId)
+                .andDeletedEqualTo(false);
+        List<Course> courses = courseMapper.selectByExample(courseExample);
+        return courses;
     }
 }

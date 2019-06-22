@@ -13,4 +13,9 @@ import edu.uni.userBaseInfo1.bean.Student;
 public interface StudentForGradeService {
 
     Student selectStudentByStuNo(String stuNo);
+
+    String selectStudentByStuNoAndStudentName(
+            String stuNo, String studentName);
+
+    Student selectStudentByStudentId(Long studentId);
 }

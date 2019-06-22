@@ -1,5 +1,6 @@
 package edu.uni.grademanagement.service;
 
+import edu.uni.educateAffair.bean.Teachingtask;
 import edu.uni.grademanagement.bean.StuGradeMain;
 
 import java.util.List;
@@ -35,7 +36,7 @@ public interface StuGradeMainService {
      * @Modify: 2019/5/19 添加缓存查询功能和教师、除学生、教师之外的在校角色区别查询
      */
     List<StuGradeMain> selectByCurriculum(Long universityId, Long teacherId, Long semesterId,
-                                          List<Long> studentIds, Long courseId, int flag);
+                                          List<Long> studentIds, Long courseId, Integer flag);
 
 
    /**
@@ -73,7 +74,8 @@ public interface StuGradeMainService {
      * @Modify: 添加缓存功能
      */
     boolean insertStuGradeMainByIds(Long universityId, Long teacherId, Long semesterId,
-                                    List<Long> studentIds, Long courseId);
+                                    List<Long> studentIds, Long courseId, Integer state);
+
 
     /**
      *
@@ -101,15 +103,14 @@ public interface StuGradeMainService {
      *//*
     Long insertStuGradeMainById(Long stuGradeMainId);*/
 
-    /**
-     *
-     * @param stuGradeMain
-     * @return
-     * @Description: 根据学生id创建学生主表
-     */
-    boolean updateStuGradeMainStateToStudentSee(StuGradeMain stuGradeMain);
+ /**
+  * @param stuGradeMainId
+  * @return
+  * @Description: 根据学生id更新缓存状态
+  */
+ void updateStuGradeMainStateToCacheInvalid(Long stuGradeMainId);
 
-    /**
+ /**
      *
      * @param stuGradeMain
      * @return
@@ -117,11 +118,21 @@ public interface StuGradeMainService {
      */
     boolean updateStuGradeMain(StuGradeMain stuGradeMain);
 
- /**
-  *
-  * @param stuGradeMainId
-  * @return
-  * @description: 根据成绩主表id查询成绩主表
-  */
- StuGradeMain selectByStuGradeMainId(Long stuGradeMainId);
+     /**
+      *
+      * @param stuGradeMainId
+      * @return
+      * @description: 根据成绩主表id查询成绩主表
+      */
+     StuGradeMain selectByStuGradeMainId(Long stuGradeMainId);
+
+    boolean insertStuGradeMainByIdsAndTeachingTasks(
+            Long universityId, Long semesterId,
+            Long courseId, List<Teachingtask> teachingtasks,
+            Integer mainStateNoscore);
+
+    List<StuGradeMain> selectByUniversityIdAndCourseIdAndSemesterId(Long universityId, Long semesterId, Long courseId);
+
+    void rebulidStuGradeMainsSelective(Long stuGradeMainId, Integer state);
+
 }

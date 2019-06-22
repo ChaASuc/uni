@@ -1,5 +1,7 @@
 package edu.uni.administrativestructure.bean;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.util.Date;
 
 public class Class {
@@ -128,7 +130,7 @@ public class Class {
     public void setHeadteacher(Long headteacher) {
         this.headteacher = headteacher;
     }
-
+    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")
     public Date getDatetime() {
         return datetime;
     }

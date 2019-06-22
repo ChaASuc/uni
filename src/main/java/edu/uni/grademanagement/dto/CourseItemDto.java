@@ -1,5 +1,6 @@
 package edu.uni.grademanagement.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.uni.grademanagement.bean.CourseItemDetail;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -31,6 +32,7 @@ public class CourseItemDto implements Serializable {
 
     private Date datetime;
 
+    @JsonProperty("teacherId")
     private Long byWho;
 
     private Integer deleted;

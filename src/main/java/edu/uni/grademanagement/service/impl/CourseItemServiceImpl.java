@@ -12,12 +12,14 @@ import edu.uni.grademanagement.mapper.CourseItemDetailMapper;
 import edu.uni.grademanagement.mapper.CourseItemMapper;
 import edu.uni.grademanagement.service.CourseItemService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.jdbc.SQL;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,7 +52,7 @@ public class CourseItemServiceImpl implements CourseItemService {
 
         CourseItemExample courseItemExample = new CourseItemExample();
         courseItemExample.createCriteria()
-                .andByWhoEqualTo(teacherId)
+//                .andByWhoEqualTo(teacherId)
                 .andCourseIdEqualTo(courseId)
                 .andUniversityIdEqualTo(universityId)
                 .andDeletedEqualTo(GradeConstant.RECORD_VALID);
@@ -140,11 +142,14 @@ public class CourseItemServiceImpl implements CourseItemService {
      * @Description: 课程成绩评分项目添加
      */
     @Transactional
-    public Boolean insertCourseItemDetails(List<CourseItemDetail> courseItemDetails) {
-        int insert = courseItemDetailMapper.insertCourseItemDetailLists(courseItemDetails);
-        if (insert == 0) {
-            return false;
-        }
+    public Boolean insertCourseItemDetails(List<CourseItemDetail> courseItemDetails) throws SQLException {
+        for (CourseItemDetail courseItemDetail :
+                courseItemDetails){
+            int insert = courseItemDetailMapper.insertSelective(courseItemDetail);
+                if (insert == 0) {
+                    throw new SQLException("插入失败");
+                }
+            }
         return true;
     }
 
@@ -168,21 +173,30 @@ public class CourseItemServiceImpl implements CourseItemService {
                 int update = courseItemMapper.updateByPrimaryKeySelective(courseItem);
                 if (update == 0) {
                     // todo 报错
-                    return false;
+                    try {
+                        throw new SQLException("课程成绩项更新失败");
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+
                 }
             }
             List<CourseItemDetail> courseItemDetails = courseItemDto.getCourseItemDetails();
-            if (CollectionUtils.isEmpty(courseItemDetails)) {
-                return true;
-            }
-            for (CourseItemDetail courseItemDetail :
-                    courseItemDetails) {
-                int update = courseItemDetailMapper.updateByPrimaryKeySelective(courseItemDetail);
-                if (update == 0) {
-                    // todo 报错
-                    return false;
+            if (!CollectionUtils.isEmpty(courseItemDetails)) {
+                for (CourseItemDetail courseItemDetail :
+                        courseItemDetails) {
+                    int update = courseItemDetailMapper.updateByPrimaryKeySelective(courseItemDetail);
+                    if (update == 0) {
+                        // todo 报错
+                        try {
+                            throw new SQLException("课程成绩评分项更新失败");
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
             }
+
         }
         return true;
 
@@ -199,11 +213,20 @@ public class CourseItemServiceImpl implements CourseItemService {
      * @Description: 更新课程成绩评分项
      */
     @Transactional
-    public Boolean updateCouseItemDetail(CourseItemDetail courseItemDetail) {
-        int update = courseItemDetailMapper.updateByPrimaryKeySelective(courseItemDetail);
-        if (update == 0) {
-            return false;
-        }
+    public Boolean updateCouseItemDetail(List<CourseItemDetail> courseItemDetails) {
+        courseItemDetails.stream().forEach(
+                courseItemDetail -> {
+                    int update = courseItemDetailMapper.updateByPrimaryKeySelective(courseItemDetail);
+                    if (update == 0) {
+                        try {
+                            throw new SQLException("课程评分项目更新失败");
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+        );
+
         return true;
     }
 
@@ -218,37 +241,15 @@ public class CourseItemServiceImpl implements CourseItemService {
      * @Description: 删除课程成绩项
      */
     @Transactional
-    public Boolean deleteCourseItem(Long courseItemId) {
-        /*CourseItem courseItem = new CourseItem();
-        courseItem.setId(courseItemId);
-        courseItem.setDeleted(GradeConstant.RECORD_INVALID);
-        int delete_courseItem = courseItemMapper.updateByPrimaryKeySelective(courseItem);
-        if (delete_courseItem == 0) {
-            log.info("【删除课程成绩项】 更新deleted 失败，courseItemId = {}",
-                    courseItemId);
-            return false;
-        }
-        CourseItemDetailExample courseItemDetailExample = new CourseItemDetailExample();
-        courseItemDetailExample.createCriteria()
-                .andCourseItemIdEqualTo(courseItemId)
-                .andDeletedEqualTo(GradeConstant.RECORD_VALID);
-        List<CourseItemDetail> courseItemDetails = courseItemDetailMapper.selectByExample(courseItemDetailExample);
-        for (CourseItemDetail courseItemDetail:
-             courseItemDetails) {
-            courseItemDetail.setDeleted(GradeConstant.RECORD_INVALID);
-            int delete_courseItemDetail = courseItemDetailMapper.updateByPrimaryKey(courseItemDetail);
-            if (delete_courseItem == 0) {
-                log.info("【删除课程成绩作业项】 更新deleted 失败，courseItemDetailId = {}",
-                        courseItemDetail.getId());
-                return false;
-            }
-        }
-        return true;*/
-        CourseItem courseItem = courseItemMapper.selectByPrimaryKey(courseItemId);
-        courseItem.setDeleted(GradeConstant.RECORD_INVALID);
-        int update = courseItemMapper.updateByPrimaryKey(courseItem);
+    public Boolean deleteCourseItem(List<Long> courseItemIds) throws SQLException {
+        CourseItemExample courseItemExample = new CourseItemExample();
+        courseItemExample.createCriteria()
+                .andIdIn(courseItemIds);
+        CourseItem item = new CourseItem();
+        item.setDeleted(GradeConstant.RECORD_INVALID);
+        int update = courseItemMapper.updateByExampleSelective(item, courseItemExample);
         if (update == 0) {
-            return false;
+            throw new SQLException("删除课程成绩项失败");
         }
         return true;
     }
@@ -264,15 +265,88 @@ public class CourseItemServiceImpl implements CourseItemService {
      * @Description: 删除课程成绩评分项
      */
     @Transactional
-    public Boolean deleteCourseItemDetail(Long courseItemDetailId) {
+    public Boolean deleteCourseItemDetail(List<Long> courseItemDetailIds) throws SQLException {
 //        int delete_courseItemDetail = courseItemDetailMapper.updateDeletedByPrimaryKey(courseItemDetailId, GradeConstant.RECORD_INVALID);
-        CourseItemDetail courseItemDetail = courseItemDetailMapper.selectByPrimaryKey(courseItemDetailId);
+        CourseItemDetailExample courseItemDetailExample = new CourseItemDetailExample();
+        courseItemDetailExample.createCriteria()
+                .andIdIn(courseItemDetailIds);
+        CourseItemDetail courseItemDetail = new CourseItemDetail();
         courseItemDetail.setDeleted(GradeConstant.RECORD_INVALID);
-        int update = courseItemDetailMapper.updateByPrimaryKey(courseItemDetail);
+        int update = courseItemDetailMapper.updateByExampleSelective(courseItemDetail, courseItemDetailExample);
+        if (update == 0) {
+            throw new SQLException("课程评分项删除失败");
+        }
+        return true;
+    }
+
+    @Transactional
+    public Boolean deleteCourseItemDetailsByCourseItemId(Long courseItemId) {
+//        int delete_courseItemDetail = courseItemDetailMapper.updateDeletedByPrimaryKey(courseItemDetailId, GradeConstant.RECORD_INVALID);
+        //判断课程成绩项中评分项是否存在
+        CourseItemDetailExample courseItemDetailExample
+                = new CourseItemDetailExample();
+        courseItemDetailExample.createCriteria()
+                .andCourseItemIdEqualTo(courseItemId);
+        CourseItemDetail courseItemDetail = new CourseItemDetail();
+        courseItemDetail.setDeleted(GradeConstant.RECORD_INVALID);
+        int update = courseItemDetailMapper.updateByExampleSelective(courseItemDetail, courseItemDetailExample);
         if (update == 0) {
             return false;
         }
         return true;
+    }
+
+    @Override
+
+    /**
+     * @Param: [id]
+     * @Return:edu.uni.grademanagement.bean.CourseItemDetail
+     * @Author: 陈汉槟
+     * @Date: 2019/5/24 13:31
+     * @Description: 根据课程评分项id获取课程评分项
+     */
+    public CourseItem selectCourseItemByCourseItemDetailId(Long id) {
+        CourseItemDetail courseItemDetail = courseItemDetailMapper.selectByPrimaryKey(id);
+        CourseItem courseItem = courseItemMapper.selectByPrimaryKey(courseItemDetail.getCourseItemId());
+        return courseItem;
+    }
+
+    @Override
+    @Transactional
+    public boolean updateCouseItem(List<CourseItem> courseItems) {
+        courseItems.stream().forEach(
+                courseItem -> {
+                    int success = courseItemMapper.updateByPrimaryKeySelective(courseItem);
+                    if (success != 1) {
+                        try {
+                            throw new SQLException("课程成绩项更新失败");
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+        );
+        return true;
+    }
+
+    @Override
+    public List<CourseItemDetail> selectCourseItemDetailsByCourseItemIdAndTeacherId(Long courseItemId, Long teacherId) {
+        CourseItemDetailExample courseItemDetailExample = new CourseItemDetailExample();
+        courseItemDetailExample.createCriteria()
+                .andCourseItemIdEqualTo(courseItemId)
+                .andByWhoEqualTo(teacherId)
+                .andDeletedEqualTo(GradeConstant.RECORD_VALID);
+        List<CourseItemDetail> courseItemDetailList =
+                courseItemDetailMapper.selectByExample(courseItemDetailExample);
+
+        return courseItemDetailList;
+    }
+
+    @Override
+    public CourseItemDetail selectCourseItemDetailByCouserItemDetailId(Long courseItemDetailId) {
+        CourseItemDetail courseItemDetail =
+                courseItemDetailMapper.selectByPrimaryKey(courseItemDetailId);
+        return courseItemDetail;
     }
 
     @Override
@@ -345,13 +419,15 @@ public class CourseItemServiceImpl implements CourseItemService {
      * @Return:java.util.List<edu.uni.grademanagement.bean.CourseItem>
      * @Author: 陈汉槟
      * @Date: 2019/5/10 13:56
-     * @Description: 根据学校id教师id和课程获取这个教师教的课的课程成绩项
+     * @Description: 根据学校id学期id和课程id获取这学期的课程成绩项
+     * @Modify: 2019/6/12 17:39
      */
-    public List<CourseItem> selectCouseItems(Long universityId, Long byWho, Long courseId) {
+    public List<CourseItem> selectCouseItems(
+            Long universityId, Long semesterId, Long courseId) {
         CourseItemExample courseItemExample = new CourseItemExample();
         courseItemExample.createCriteria()
                 .andUniversityIdEqualTo(universityId)
-                .andByWhoEqualTo(byWho)
+                .andSemesterIdEqualTo(semesterId)
                 .andCourseIdEqualTo(courseId)
                 .andDeletedEqualTo(GradeConstant.RECORD_VALID);
         List<CourseItem> courseItemList = courseItemMapper.selectByExample(courseItemExample);

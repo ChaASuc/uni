@@ -128,8 +128,8 @@ public class ClassServiceImpl implements ClassService {
     }
 //根据学校id分页查询班级信息
     @Override
-    public PageInfo<Class> selectPageByUniversity(int pageNum, long universityId) {
-        PageHelper.startPage(pageNum, globalConfig.getPageSize());    // 开启分页查询，第一次切仅第一次查询时生效
+    public List<Class> selectPageByUniversity(long universityId) {
+//        PageHelper.startPage(pageNum, globalConfig.getPageSize());    // 开启分页查询，第一次切仅第一次查询时生效
         // 创建查询条件
         ClassExample example = new ClassExample();
         ClassExample.Criteria criteria = example.createCriteria();
@@ -137,14 +137,14 @@ public class ClassServiceImpl implements ClassService {
         // 根据条件查询
         List<Class> classes = classMapper.selectByExample(example);
         if(classes != null)
-            return new PageInfo<>(classes);
+            return classes;
         else
             return null;
     }
 //根据部门id分页查询班级信息
     @Override
-    public PageInfo<Class> selectPageByDepartment(int pageNum, long departmentId) {
-        PageHelper.startPage(pageNum, globalConfig.getPageSize());    // 开启分页查询，第一次切仅第一次查询时生效
+    public List<Class> selectPageByDepartment(long departmentId) {
+//        PageHelper.startPage(pageNum, globalConfig.getPageSize());    // 开启分页查询，第一次切仅第一次查询时生效
         // 创建查询条件
         ClassExample example = new ClassExample();
         ClassExample.Criteria criteria = example.createCriteria();
@@ -152,7 +152,7 @@ public class ClassServiceImpl implements ClassService {
         // 根据条件查询
         List<Class> classes = classMapper.selectByExample(example);
         if(classes != null)
-            return new PageInfo<>(classes);
+            return classes;
         else
             return null;
     }
@@ -170,5 +170,34 @@ public class ClassServiceImpl implements ClassService {
             return new PageInfo<>(classes);
         else
             return null;
+    }
+
+    @Override
+    public List<Class> selectAll() {
+        return classMapper.selectByExample(null);
+    }
+
+    @Override
+    public Class selectByCode(String code) {
+        ClassExample example = new ClassExample();
+        ClassExample.Criteria criteria = example.createCriteria();
+        criteria.andCodeEqualTo(code).andDeletedEqualTo(false);
+        return classMapper.selectByExample(example).get(0);
+    }
+
+    @Override
+    public List<Class> selectSpecilty(long specialty_id) {
+        ClassExample example = new ClassExample();
+        ClassExample.Criteria criteria = example.createCriteria();
+        criteria.andSpecialtyIdEqualTo(specialty_id).andDeletedEqualTo(false);
+        return classMapper.selectByExample(example);
+    }
+
+    @Override
+    public List<Class> selectLikeName(String name) {
+        ClassExample example = new ClassExample();
+        ClassExample.Criteria criteria = example.createCriteria();
+        criteria.andNameLike("%"+name+"%").andDeletedEqualTo(false);
+        return classMapper.selectByExample(example);
     }
 }

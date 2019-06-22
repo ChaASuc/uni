@@ -1,4 +1,11 @@
+/*
+author:  邓凯丰
+create:  2019.5.10
+modified:  2019.5.11
+*/
 package edu.uni.professionalcourses.bean;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.util.Date;
 
@@ -49,6 +56,7 @@ public class CourseCategory {
         this.ename = ename == null ? null : ename.trim();
     }
 
+    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")
     public Date getDatetime() {
         return datetime;
     }

@@ -27,5 +27,7 @@ public class GradeFilter implements Serializable {
 
     private List<Long> teacherIds;
 
-    private Integer pageNum;
+    private List<Long> departmentIds;
+
+    private Integer pageNum = 0;
 }

@@ -4,6 +4,7 @@
   <resultMap id="BaseResultMap" type="edu.uni.grademanagement.bean.CourseItem">
     <id column="id" jdbcType="BIGINT" property="id" />
     <result column="university_id" jdbcType="BIGINT" property="universityId" />
+    <result column="semester_id" jdbcType="BIGINT" property="semesterId" />
     <result column="course_id" jdbcType="BIGINT" property="courseId" />
     <result column="name" jdbcType="TINYINT" property="name" />
     <result column="rate" jdbcType="DOUBLE" property="rate" />
@@ -71,7 +72,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    id, university_id, course_id, name, rate, count, datetime, by_who, deleted
+    id, university_id, semester_id, course_id, name, rate, count, datetime, by_who, deleted
   </sql>
   <select id="selectByExample" parameterType="edu.uni.grademanagement.bean.CourseItemExample" resultMap="BaseResultMap">
     select
@@ -93,6 +94,7 @@
     from course_item
     where id = #{id,jdbcType=BIGINT}
   </select>
+
   <select id="selectByCourseItem" parameterType="edu.uni.grademanagement.bean.CourseItem" resultMap="BaseResultMap">
     select
     <include refid="Base_Column_List"/>
@@ -108,6 +110,7 @@
     and
     deleted = #{record.deleted}
   </select>
+
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
     delete from course_item
     where id = #{id,jdbcType=BIGINT}
@@ -122,27 +125,12 @@
     <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
       SELECT LAST_INSERT_ID()
     </selectKey>
-    insert into course_item (university_id, course_id, name, 
-      rate, count, datetime, 
+    insert into course_item (university_id, semester_id, course_id, 
+      name, rate, count, datetime, 
       by_who, deleted)
-    values (#{universityId,jdbcType=BIGINT}, #{courseId,jdbcType=BIGINT}, #{name,jdbcType=TINYINT}, 
-      #{rate,jdbcType=DOUBLE}, #{count,jdbcType=INTEGER}, #{datetime,jdbcType=TIMESTAMP}, 
+    values (#{universityId,jdbcType=BIGINT}, #{semesterId,jdbcType=BIGINT}, #{courseId,jdbcType=BIGINT}, 
+      #{name,jdbcType=TINYINT}, #{rate,jdbcType=DOUBLE}, #{count,jdbcType=INTEGER}, #{datetime,jdbcType=TIMESTAMP}, 
       #{byWho,jdbcType=BIGINT}, #{deleted,jdbcType=TINYINT})
-  </insert>
-
-  <insert id="insertCourseItemLists">
-    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
-      SELECT LAST_INSERT_ID()
-    </selectKey>
-    insert into course_item (university_id, course_id, name,
-    rate, count, datetime,
-    by_who, deleted)
-    values
-    <foreach collection="courseItemLists" item="item" index="index" separator=",">
-      (#{item.universityId}, #{item.courseId}, #{item.name},
-      #{item.rate}, #{item.count}, #{item.datetime},
-      #{item.byWho}, #{item.deleted})
-    </foreach>
   </insert>
   <insert id="insertSelective" parameterType="edu.uni.grademanagement.bean.CourseItem">
     <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
@@ -152,6 +140,9 @@
     <trim prefix="(" suffix=")" suffixOverrides=",">
       <if test="universityId != null">
         university_id,
+      </if>
+      <if test="semesterId != null">
+        semester_id,
       </if>
       <if test="courseId != null">
         course_id,
@@ -179,6 +170,9 @@
       <if test="universityId != null">
         #{universityId,jdbcType=BIGINT},
       </if>
+      <if test="semesterId != null">
+        #{semesterId,jdbcType=BIGINT},
+      </if>
       <if test="courseId != null">
         #{courseId,jdbcType=BIGINT},
       </if>
@@ -202,6 +196,22 @@
       </if>
     </trim>
   </insert>
+
+  <insert id="insertCourseItemLists">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into course_item (university_id, course_id, name,
+    rate, count, datetime,
+    by_who, deleted)
+    values
+    <foreach collection="courseItemLists" item="item" index="index" separator=",">
+      (#{item.universityId}, #{item.courseId}, #{item.name},
+      #{item.rate}, #{item.count}, #{item.datetime},
+      #{item.byWho}, #{item.deleted})
+    </foreach>
+  </insert>
+
   <select id="countByExample" parameterType="edu.uni.grademanagement.bean.CourseItemExample" resultType="java.lang.Long">
     select count(*) from course_item
     <if test="_parameter != null">
@@ -216,6 +226,9 @@
       </if>
       <if test="record.universityId != null">
         university_id = #{record.universityId,jdbcType=BIGINT},
+      </if>
+      <if test="record.semesterId != null">
+        semester_id = #{record.semesterId,jdbcType=BIGINT},
       </if>
       <if test="record.courseId != null">
         course_id = #{record.courseId,jdbcType=BIGINT},
@@ -247,6 +260,7 @@
     update course_item
     set id = #{record.id,jdbcType=BIGINT},
       university_id = #{record.universityId,jdbcType=BIGINT},
+      semester_id = #{record.semesterId,jdbcType=BIGINT},
       course_id = #{record.courseId,jdbcType=BIGINT},
       name = #{record.name,jdbcType=TINYINT},
       rate = #{record.rate,jdbcType=DOUBLE},
@@ -263,6 +277,9 @@
     <set>
       <if test="universityId != null">
         university_id = #{universityId,jdbcType=BIGINT},
+      </if>
+      <if test="semesterId != null">
+        semester_id = #{semesterId,jdbcType=BIGINT},
       </if>
       <if test="courseId != null">
         course_id = #{courseId,jdbcType=BIGINT},
@@ -291,6 +308,7 @@
   <update id="updateByPrimaryKey" parameterType="edu.uni.grademanagement.bean.CourseItem">
     update course_item
     set university_id = #{universityId,jdbcType=BIGINT},
+      semester_id = #{semesterId,jdbcType=BIGINT},
       course_id = #{courseId,jdbcType=BIGINT},
       name = #{name,jdbcType=TINYINT},
       rate = #{rate,jdbcType=DOUBLE},
@@ -299,43 +317,5 @@
       by_who = #{byWho,jdbcType=BIGINT},
       deleted = #{deleted,jdbcType=TINYINT}
     where id = #{id,jdbcType=BIGINT}
-  </update>
-
-  <!-- 批量更新第一种方法，通过接收传进来的参数list进行循环着组装sql -->
-  <update id="updateListByPrimaryKeySelective" >
-  <!-- 接收list参数，循环着组装sql语句，注意for循环的写法
-       separator=";" 代表着每次循环完，在sql后面放一个分号
-       item="cus" 循环List的每条的结果集
-       collection="list" list 即为 map传过来的参数key -->
-    <foreach collection="courseItemLists" separator=";" item="courseItem">
-      update course_item
-      <set>
-        <if test="courseItem.universityId != null">
-          university_id = #{courseItem.universityId},
-        </if>
-        <if test="courseItem.courseId != null">
-          course_id = #{courseItem.courseId},
-        </if>
-        <if test="courseItem.name != null">
-          name = #{courseItem.name},
-        </if>
-        <if test="courseItem.rate != null">
-          rate = #{courseItem.rate},
-        </if>
-        <if test="courseItem.count != null">
-          count = #{courseItem.count},
-        </if>
-        <if test="courseItem.datetime != null">
-          datetime = #{courseItem.datetime},
-        </if>
-        <if test="courseItem.byWho != null">
-          by_who = #{courseItem.byWho},
-        </if>
-        <if test="courseItem.deleted != null">
-          deleted = #{courseItem.deleted},
-        </if>
-      </set>
-      where id = #{courseItem.id}
-    </foreach>
   </update>
 </mapper>

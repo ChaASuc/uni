@@ -1,12 +1,11 @@
 package edu.uni.userBaseInfo1.service;
 
 import com.github.pagehelper.PageInfo;
-import edu.uni.userBaseInfo1.bean.Picture;
-import edu.uni.userBaseInfo1.bean.PictureExample;
-import edu.uni.userBaseInfo1.bean.Student;
-import edu.uni.userBaseInfo1.bean.StudentExample;
+import edu.uni.userBaseInfo1.bean.*;
+import edu.uni.userBaseInfo1.utils.UserInfo;
 import org.hibernate.validator.constraints.br.CNPJ;
 
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -15,6 +14,37 @@ import java.util.List;
  * @Date 10:01 2019/4/30
  **/
 public interface StudentService {
+
+        /**
+         * Author: mokuanyuan 20:02 2019/6/9
+         * @param map
+         * @param student
+         * @apiNote: 把student对象里的id信息内容查询出来，并把相应的信息放进map里
+         */
+        public void selectByUserIdToMap(HashMap map, Student student);
+
+        /**
+         * Author: mokuanyuan 14:52 2019/6/12
+         * @param oldId
+         * @param newId
+         * @return boolean 操作结果
+         * @apiNote: 当审批的最后一步都通过后进行的操作，把相应的信息记录进行更新操作
+         */
+        public boolean updateForApply(Long oldId, Long newId);
+
+        /**
+         * Author: mokuanyuan 16:55 2019/6/13
+         * @param map
+         * @param student
+         * @param oldId
+         * @param newId
+         * @param loginUser
+         * @param modifiedUser
+         * @return boolean
+         * @apiNote: 用户点击申请时进行的一些系列为了创建申请记录所做的准备
+         */
+//        public boolean readyForApply(HashMap<String, Object> map, Student student, Long oldId, Long newId,
+//                                     edu.uni.auth.bean.User loginUser, User modifiedUser);
 
         /**
          * Author: laizhouhao 10:04 2019/4/30
@@ -42,6 +72,7 @@ public interface StudentService {
         /**
          * Author: laizhouhao 18:34 2019/5/6
          * @param user_id
+         * @return List<Student>
          * @apiNote: 根据用户id查找学生信息
          */
         List<Student>selectByUserId(Long user_id);
@@ -101,5 +132,36 @@ public interface StudentService {
          * @apiNote: 根据用户id查找有效的学生信息
          */
         List<Student> selectValidStudentByUserId(Long user_id);
+        /**
+         * Author: mokuanyuan 18:33 2019/6/11
+         * @param student
+         * @param userInfo_apply
+         * @return boolean
+         * @apiNote: 用户点击申请修改学生主要信息
+         */
+//        boolean clickApplyStudent(Student student, UserinfoApply userInfo_apply);
 
+        /**
+         * Author: chenenru 15:44 2019/5/16
+         * @param  student_id
+         * @return Student
+         * @apiNote: 根据学生id获取学生实体信息
+         */
+        Student selectValidStudentByStuId(Long student_id);
+
+        /**
+         * Author: laizhouhao 21:33 2019/6/2
+         * @param stu_no
+         * @return 学生实体
+         * @apiNote: 根据学号获取学生实体
+         */
+        Student selectValidStuByStuNo(String stu_no);
+
+        /**
+         * Author: laizhouhao 18:55 2019/6/10
+         * @param studentList
+         * @return 用户的有效的学生信息详情
+         * @apiNote: 根据用户的学生实体获取用户的所有有效的学生信息详情
+         */
+//        void getStudent(HashMap<String, Object> map, List<Student> studentList);
 }

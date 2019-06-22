@@ -62,8 +62,8 @@ public class DepartmentSubdepartmentServiceImpl implements DepartmentSubdepartme
 
 //    根据学校id分页查询一二级部门关系
     @Override
-    public PageInfo<DepartmentSubdepartment> selectPageByUniversity(int pageNum, long universityId) {
-        PageHelper.startPage(pageNum, globalConfig.getPageSize());    // 开启分页查询，第一次切仅第一次查询时生效
+    public List<DepartmentSubdepartment> selectPageByUniversity(long universityId) {
+//        PageHelper.startPage(pageNum, globalConfig.getPageSize());    // 开启分页查询，第一次切仅第一次查询时生效
         // 创建查询条件
         DepartmentSubdepartmentExample example = new DepartmentSubdepartmentExample();
         DepartmentSubdepartmentExample.Criteria criteria = example.createCriteria();
@@ -71,15 +71,15 @@ public class DepartmentSubdepartmentServiceImpl implements DepartmentSubdepartme
         // 根据条件查询
         List<DepartmentSubdepartment> departmentSubdepartments = departmentSubdepartmentMapper.selectByExample(example);
         if(departmentSubdepartments != null)
-            return new PageInfo<>(departmentSubdepartments);
+            return departmentSubdepartments;
         else
             return null;
     }
 
 //    根据一级部门id分页查询一二级部门关系表
     @Override
-    public PageInfo<DepartmentSubdepartment> selectPageByDepartment(int pageNum, long departmentId) {
-        PageHelper.startPage(pageNum, globalConfig.getPageSize());    // 开启分页查询，第一次切仅第一次查询时生效
+    public List<DepartmentSubdepartment> selectPageByDepartment( long departmentId) {
+//        PageHelper.startPage(pageNum, globalConfig.getPageSize());    // 开启分页查询，第一次切仅第一次查询时生效
         // 创建查询条件
         DepartmentSubdepartmentExample example = new DepartmentSubdepartmentExample();
         DepartmentSubdepartmentExample.Criteria criteria = example.createCriteria();
@@ -87,15 +87,15 @@ public class DepartmentSubdepartmentServiceImpl implements DepartmentSubdepartme
         // 根据条件查询
         List<DepartmentSubdepartment> departmentSubdepartments = departmentSubdepartmentMapper.selectByExample(example);
         if(departmentSubdepartments != null)
-            return new PageInfo<>(departmentSubdepartments);
+            return departmentSubdepartments;
         else
             return null;
     }
 
 //    根据二级部门id分页查询一二级部门关系表
     @Override
-    public PageInfo<DepartmentSubdepartment> selectPageBySubdepartment(int pageNum, long subdepartmentId) {
-        PageHelper.startPage(pageNum, globalConfig.getPageSize());    // 开启分页查询，第一次切仅第一次查询时生效
+    public List<DepartmentSubdepartment> selectPageBySubdepartment(long subdepartmentId) {
+//        PageHelper.startPage(pageNum, globalConfig.getPageSize());    // 开启分页查询，第一次切仅第一次查询时生效
         // 创建查询条件
         DepartmentSubdepartmentExample example = new DepartmentSubdepartmentExample();
         DepartmentSubdepartmentExample.Criteria criteria = example.createCriteria();
@@ -103,7 +103,7 @@ public class DepartmentSubdepartmentServiceImpl implements DepartmentSubdepartme
         // 根据条件查询
         List<DepartmentSubdepartment> departmentSubdepartments = departmentSubdepartmentMapper.selectByExample(example);
         if(departmentSubdepartments != null)
-            return new PageInfo<>(departmentSubdepartments);
+            return departmentSubdepartments;
         else
             return null;
     }

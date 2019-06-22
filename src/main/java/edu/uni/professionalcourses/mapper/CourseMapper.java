@@ -1,10 +1,10 @@
 package edu.uni.professionalcourses.mapper;
 
-import java.util.List;
-
 import edu.uni.professionalcourses.bean.Course;
 import edu.uni.professionalcourses.bean.CourseExample;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 public interface CourseMapper {
     int countByExample(CourseExample example);
@@ -28,4 +28,6 @@ public interface CourseMapper {
     int updateByPrimaryKeySelective(Course record);
 
     int updateByPrimaryKey(Course record);
+
+    List<Course> courseSelective(Course course);
 }

@@ -3,9 +3,11 @@ package edu.uni.grademanagement.service;
 import edu.uni.grademanagement.bean.CourseItem;
 import edu.uni.grademanagement.bean.StuGradeMain;
 import edu.uni.grademanagement.bean.StuItemGrade;
+import edu.uni.grademanagement.bean.StuItemGradeDetail;
 import edu.uni.grademanagement.dto.StuGradeItemDto;
 import edu.uni.grademanagement.form.UpdateStuGradeMainForm;
 
+import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -25,6 +27,16 @@ public interface StuGradeItemService {
      */
     List<StuGradeItemDto> selectByStuGradeMainId(Long stuGradeMainId, Integer flag);
 
+
+    /**
+     *
+     * @param stuGradeMainId
+     * @param flag
+     * @return
+     */
+    void rebulidStuGradeItemSelective(
+           Long stuGradeMainId, Long rebulidStuGradeMainId, Integer flag
+    );
     /**
      *
      * @param courseItem
@@ -50,7 +62,7 @@ public interface StuGradeItemService {
      * @return
      * @description: 根据成绩主表id何课程成绩项id获取成绩项
      */
-    StuItemGrade selectStuItemGradeByStuGradeMainId(Long stuGradeMainId, Long courseItemId);
+    StuItemGrade selectStuItemGradeByStuGradeMainIdAndCourseItemId(Long stuGradeMainId, Long courseItemId);
 
 
     /**
@@ -87,7 +99,7 @@ public interface StuGradeItemService {
      * @return
      * @description: 根据学校id，课程成绩项id，教师id，学生主表id 创建成绩项
      */
-    boolean insertStuGradeItemByExcelContent(Long universityId, Long courseItemId, Long teacherId, Long stuGradeMainId);
+    boolean insertStuGradeItemByExcelContent(Long universityId, Long courseItemId, Long teacherId, Long stuGradeMainId) throws SQLException;
 
     /**
      *
@@ -96,4 +108,11 @@ public interface StuGradeItemService {
      * @description: 根据成绩项id获取成绩项
      */
     StuItemGrade selectByStuItemGradeId(Long stuItemGradeId);
+
+    /**
+     *
+     * @param stuGradeMainId
+     * @return
+     */
+    void updateStuItemGradeStateToCacheInvalid(Long stuGradeMainId);
 }

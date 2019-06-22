@@ -48,15 +48,20 @@ public interface DepartmentService {
 
     /**
      * 分学校分页查询部门
-     * @param pageNum
      * @param universityId
      * @return
      */
-    PageInfo<Department> selectPageByUniversity(int pageNum, long universityId);
+    List<Department> selectPageByUniversity(long universityId);
 
     /**
      * 查找所有部门
      * @return
      */
     List<Department> selectAll();
+    /*
+    * 根据部门名称模糊查询记录
+    * */
+    List<Department> selectLikeName(String name);
+//查找学院
+    List<Department> selectLikeDepartmentName(String name);
 }

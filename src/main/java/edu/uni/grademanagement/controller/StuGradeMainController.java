@@ -4,13 +4,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import edu.uni.administrativestructure.bean.Class;
+import edu.uni.administrativestructure.bean.Department;
 import edu.uni.administrativestructure.service.ClassService;
+import edu.uni.administrativestructure.service.DepartmentService;
 import edu.uni.administrativestructure.service.UniversityService;
 import edu.uni.bean.Result;
 import edu.uni.bean.ResultType;
-import edu.uni.educateAffair.bean.Canlendar;
-import edu.uni.educateAffair.bean.Curriculum;
-import edu.uni.educateAffair.bean.Semester;
+import edu.uni.educateAffair.bean.Teachingtask;
 import edu.uni.educateAffair.service.CanlendarService;
 import edu.uni.educateAffair.service.CurriculumService;
 import edu.uni.educateAffair.service.SemesterService;
@@ -20,11 +20,7 @@ import edu.uni.grademanagement.constants.GradeConstant;
 import edu.uni.grademanagement.constants.RoleConstant;
 import edu.uni.grademanagement.dto.CourseDto;
 import edu.uni.grademanagement.dto.StuGradeItemDto;
-import edu.uni.grademanagement.form.InsertStuItmeGradeDtoByExcelForm;
-import edu.uni.grademanagement.service.CourseDtoService;
-import edu.uni.grademanagement.service.StuGradeItemDetailService;
-import edu.uni.grademanagement.service.StuGradeItemService;
-import edu.uni.grademanagement.service.StuGradeMainService;
+import edu.uni.grademanagement.service.*;
 import edu.uni.grademanagement.vo.*;
 import edu.uni.professionalcourses.bean.Course;
 import edu.uni.userBaseInfo1.bean.Student;
@@ -37,6 +33,8 @@ import edu.uni.utils.RedisCache;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import javafx.scene.CacheHint;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
@@ -55,9 +53,10 @@ import java.util.stream.Collectors;
  * @Description  成绩主表控制层角色接口
  * @Since 1.0.0
  */
-@Api(value = "成绩主表控制层", tags = {"成绩主表控制层"})
+@Api(description = "成绩主表控制层")
 @RestController
 @RequestMapping("/json/gradeManagement/gradeMain")
+@Slf4j
 public class StuGradeMainController {
 
     @Autowired
@@ -96,6 +95,20 @@ public class StuGradeMainController {
     @Autowired
     private CanlendarService canlendarService;
 
+    @Autowired
+    private CourseForGradeService courseForGradeService;
+
+    @Autowired
+    private DepartmentService departmentService;
+
+    @Autowired
+    private EducateAffairService educateAffairService;
+
+    @Autowired
+    private AdministrativestructureService administrativestructureService;
+
+    @Autowired
+    private StuAbSenceService stuAbSenceService;
 
     @Autowired
     private RedisCache redisCache;
@@ -111,13 +124,27 @@ public class StuGradeMainController {
         // gm_stuGradeMain_stuList_{studentId}_{fromSemesterId}_{toSemesterId}_{pageNum}
 //        public static final String StuList_CacheNamePrefix = "gm_stuGradeMain_stuList_%s_%s_%s_%s";
         // 根据学生id存储学生主表成绩
-        public static final String StuList_CacheNamePrefix = "gm_stuGradeMain_stuList_%s";
-        // 根据学期id和课程id和班级id和页码存储学生主表成绩
-        // gm_stuGradeMain_tecList_{semesterId}_{courseId}_{classId}_{pageNum}
-        public static final String TecList_CacheName = "gm_stuGradeMain_tecList_%s_%s_%s_%s";
-        // 根据学期id和课程id和班级id和页码存储学生主表成绩
-        // gm_stuGradeMain_List_{semesterId}_{courseId}_{teacherId}_{classId}_{pageNum}
-        public static final String ListAll_CacheName = "gm_stuGradeMain_tecList_%s_%s_%s_%s_%s";
+        // gm_stuGradeMain_tecList_{semesterId}_{studentId}
+        public static final String StuList_CacheNamePrefix = "gm_stuGradeMain_stuList_%s_%s";
+        // 根据学期集合课程集合班级集合教师集合院级集合分页获取课表
+        // gm_stuGradeMain_tecList_{semesterIds}_{courseIds}_{classIds}_{teacherIds}_{departmentIds}_{pageNum}
+        public static final String Curriculum_CacheNamePrefix =
+                "gm_stuGradeMain_curriculum_%s_%s_%s_%s_%s_%s";
+        // 根据教师学校id学期id课程id和班级id教师id存储学生主表成绩
+        // gm_stuGradeMain_tecList_{universityId}_{semesterId}_{courseId}_{classId}_{teacherId}
+        public static final String TecList_CacheName = "gm_stuGradeMain_tecList_%s_%s_%s_%s_%s";
+//        根据非任课老师学校id学期id课程id和班级id教师id存储学生主表成绩
+        // gm_stuGradeMain_tecList_{universityId}_{semesterId}_{teacherId}_{courseId}_{classId}
+        public static final String EmployeeList_CacheName = "gm_stuGradeMain_semployeeList_%s_%s_%s_%s_%s";
+        // 根据成绩主表
+        // gm_stuGradeMain_List_*
+        public static final String ListAll_CacheName = "gm_stuGradeMain_*";
+        // 根据学期id和课程id和班级id存储学生考勤
+        // gm_stuGradeMain_stuAbsence_{semesterId}_{courseId}_{teacherId}_{classId}_{pageNum}
+        public static final String StuAbsence_CachePrefix = "gm_stuGradeMain_stuAbsence_%s_%s_%s";
+        // 根据学校id存储课程
+        // gm_stuGradeMain_course_{universityId}
+        public static final String Course_CachePrefix = "gm_stuGradeMain_course_%s";
     }
 
     // todo 未完成需要其他模块数据
@@ -130,38 +157,42 @@ public class StuGradeMainController {
      * @Description: 根据学生id查找所有成绩主表信息
      * @Modify: 2019/5/17 添加缓存功能，改变数据格式输出，修改成绩主表显示格式
      */
-    @ApiOperation(value = "学生获取主表", tags = {"获取有效信息", "学生角色", "可用"}, notes = "可有可无参数")
+    @ApiOperation(value = "学生获取主表", notes = "学生角色")
     @GetMapping("/stuList/{studentId}")
     public void getStuList(
             @ApiParam(value = "学生id", required = false)
             @PathVariable Long studentId,
+            @RequestParam(required = false) Long semesterId,
             HttpServletResponse response
     ) throws IOException {
         response.setContentType("application/json;charset=utf-8");
-        // 1 todo 获取redis缓存key 留
-//        String cacheName = String.format(CacheNameHelper.StuList_CacheNamePrefix, studentId);
+        // 1 获取redis缓存key
+        //  获取当前学期
+        if (semesterId == null) {
+            semesterId = 40L;
+        }
+        String cacheName = String.format(CacheNameHelper.StuList_CacheNamePrefix,
+                semesterId, studentId);
 
-        // 2 todo 根据key获取缓存 留
-//        String stuJson = redisCache.get(cacheName);
-        String stuJson = "";  // todo 缓存写入就删掉
-        // 3 todo 判断是否存在 留
-//        if (stuJson == null) {
+        // 2 根据key获取缓存
+        String json = redisCache.get(cacheName);
+//        String json = null;
+        // 3 判断是否存在
+        if (json == null) {
 
-            // 5.1 根据学生id和学期id获取学生成绩主表
-            // todo 向学期模块获取当前学期
-            Long semesterId = 40L;
+
             List<StuGradeMain> stuGradeMains =
                     stuGradeMainService.selectStugradeMainByStudentId(studentId,semesterId);
             if (CollectionUtils.isEmpty(stuGradeMains)) {
-                response.getWriter().write(JsonUtils.obj2String(null));
+                json = Result.build(ResultType.Success).appendData("stuGradeVOS", null).convertIntoJSON();
+                response.getWriter().write(json);
             }
 
-            // 5.2 todo 向其他模快获取值
+            // 5.2 向其他模快获取值
             // 同个学生
-            List<Student> students =
-                    studentService.selectByUserId(studentId);
-            Student student = students.get(0);
-            User user = userService.selectUserById(studentId);
+            Student student = studentService.selectById(studentId);
+
+            User user = userService.selectUserById(student.getUserId());
 
             String studentName = user.getUserName();
             String stuNo = student.getStuNo();
@@ -169,16 +200,15 @@ public class StuGradeMainController {
             Long classId = student.getClassId();
             Class classEntity = classService.select(classId);
             String className = classEntity.getName();
+            String classCode = classEntity.getCode();
+            Department department = departmentService.select(classEntity.getDepartmentId());
+            String departmentName = department.getName();
+        String specialtyName = "";
 
-            List<StuGradeVO> stuGradeVOS = stuGradeMains.stream().map(
+        List<StuGradeVO> stuGradeVOS = stuGradeMains.stream().map(
                     stuGradeMain -> {
                         StuGradeVO stuGradeVO = new StuGradeVO();
                         BeanUtils.copyProperties(stuGradeMain, stuGradeVO);
-
-                        /*//  根据学院id获取学院信息 todo university没数据
-                        University university =
-                                universityService.select(stuGradeMain.getUniversityId());
-                        stuGradeVO.setUniversityName(university.getName());*/
 
                         // 根据用户模块获取学生信息
                         stuGradeVO.setStudentId(studentId);
@@ -186,31 +216,22 @@ public class StuGradeMainController {
                         stuGradeVO.setStuNo(stuNo);
                         stuGradeVO.setClassId(classId);
                         stuGradeVO.setClassName(className);
-
-                        // 根据学期模块获取学期
-                        Semester semester =
-                                semesterService.selectById(stuGradeVO.getSemesterId());
-                        stuGradeVO.setSemesterName(semester.getName());
+                        stuGradeVO.setClassCode(classCode);
+                        stuGradeVO.setSpecialtyName(specialtyName);
+                        stuGradeVO.setDepartmentName(departmentName);
 
                         // 根据课程id获取课程信息
                         CourseDto courseDto =
-                                null;
-                        try {
-                            courseDto = courseDtoService.selectByCourseId(stuGradeVO.getCourseId());
-                        } catch (SQLException e) {
-                            e.printStackTrace();
-                        }
+                                 courseDtoService.selectByCourseId(stuGradeVO.getCourseId());
+
                         stuGradeVO.setSpeciesId(courseDto.getSpeciesId());
                         stuGradeVO.setCategoryId(courseDto.getCategoryId());
                         stuGradeVO.setCategoryName(courseDto.getCategoryName());
                         stuGradeVO.setSpeciesName(courseDto.getSpeciesName());
-                        stuGradeVO.setNumber(courseDto.getNumber());
+                        stuGradeVO.setCourseNumber(courseDto.getNumber());
                         stuGradeVO.setCourseName(courseDto.getName());
-
-                        // 根据教师id获取教师名字
-                        User teacher = userService.selectUserById(stuGradeMain.getByWho());
-                        String teacherName = teacher.getUserName();
-                        stuGradeVO.setWho(teacherName);
+                        stuGradeVO.setHour(courseDto.getHour());
+                        stuGradeVO.setCredit(courseDto.getCredit());
 
                         List<StuGradeItemDto> stuGradeItemDtos = stuGradeItemService.selectByStuGradeMainId(
                                 stuGradeMain.getId(), null
@@ -220,42 +241,16 @@ public class StuGradeMainController {
                     }
             ).collect(Collectors.toList());
             // 5.4 转换json字符串
-            stuJson = JsonUtils.obj2String(stuGradeVOS);
-            // 5.5  todo 写入缓存 留
-//            redisCache.set(cacheName, stuJson);
-//        }
+            json = Result.build(ResultType.Success).appendData("stuGradeVOS", stuGradeVOS).convertIntoJSON();
+            // 5.5   写入缓存 留
+            redisCache.set(cacheName, json);
+        }
 
         // 6 返回值
-        response.getWriter().write(stuJson);
+        response.getWriter().write(json);
 //    }
 }
-//
-
-    /**
-     *
-     * @Param [teacherId, gradeFilter, response]
-     * @Return:void
-     * @Author: 陈汉槟
-     * @Date: 2019/5/19 18:32
-     * @Description:  教师所教学生成绩主表 // todo 未加入缓存
-     */
-    @ApiOperation(value = "教师所教学生成绩主表分组表", tags = {"获取有效信息", "教师角色"}, notes = "可有可无参数,，为空代表今年学期")
-    @GetMapping("/curriculum/{teacherId}")
-    public void getCurriculumByTeacherId(
-            @ApiParam(value = "教师id", required = true)
-            @PathVariable Long teacherId,
-            @ApiParam(value = "高级过滤条件", required = false)
-            @RequestBody(required = false) GradeFilter gradeFilter,
-            HttpServletResponse response
-    ) throws IOException {
-        String json = null;
-        Integer flag = RoleConstant.TEACHER;
-        json = getJson(teacherId, gradeFilter, flag, response);
-        response.setContentType("application/json;charset=utf-8");
-        response.getWriter().write(json);
-    }
-
-    /**
+/**
      *
      * @Param [teacherId, gradeFilter, response]
      * @Return:void
@@ -263,115 +258,86 @@ public class StuGradeMainController {
      * @Date: 2019/5/19 18:32
      * @Description:  除教师外在职角色查看教师所教学生成绩主表 // todo 未加入缓存
      */
-    @ApiOperation(value = "教师所教学生成绩主表分组表", tags = {"获取有效信息", "院长，班主任"}, notes = "可有可无参数,，为空代表今年学期")
-    @GetMapping("/curriculum")
+    @ApiOperation(value = "教师所教学生成绩主表分组表", notes = "除学生外等角色")
+    @PostMapping("/curriculum")
     public void getCurriculum(
             @ApiParam(value = "高级过滤条件", required = false)
             @RequestBody(required = false) GradeFilter gradeFilter,
             HttpServletResponse response
     ) throws IOException {
-        String json = null;
-        Integer flag = RoleConstant.EMPLOYEE_EXINCLUDE_TEACHER;
-        json = getJson(null, gradeFilter, flag, response);
-        response.setContentType("application/json;charset=utf-8");
-        response.getWriter().write(json);
-    }
+        String cacheName = String.format(CacheNameHelper.Curriculum_CacheNamePrefix,
+                JsonUtils.obj2String(gradeFilter.getSemesterIds()),
+                JsonUtils.obj2String(gradeFilter.getCourseIds()),
+                JsonUtils.obj2String(gradeFilter.getClassIds()),
+                JsonUtils.obj2String(gradeFilter.getTeacherIds()),
+                JsonUtils.obj2String(gradeFilter.getDepartmentIds()),
+                gradeFilter.getPageNum() != null ? gradeFilter.getPageNum(): 0);
 
+        // 2 根据key获取缓存
+        String json = redisCache.get(cacheName);
+//        String json = null;
+        // 3 判断是否存在
+        if (json == null) {
+            List<Long> semesterIds = new ArrayList<>();
+            List<Long> teacherIds = new ArrayList<>();
+            List<Long> courseIds = new ArrayList<>();
+            List<Long> classIds = new ArrayList<>();
+            List<Long> departmentIds = new ArrayList<>();
+            Integer pageNum = 0;
+            if (gradeFilter == null) {
+                // todo 学期模块获取默认当前学期
+                Long semesterId = 40L;
+                semesterIds.add(semesterId);
+            }else {
+                semesterIds = gradeFilter.getSemesterIds();
+                teacherIds = gradeFilter.getTeacherIds();
+                courseIds = gradeFilter.getCourseIds();
+                classIds = gradeFilter.getClassIds();
+                departmentIds = gradeFilter.getDepartmentIds();
+                if (gradeFilter.getPageNum() != null) {
 
-
-    /**
-     *
-     * @Param
-     * @Return:
-     * @Author: deschen
-     * @Date: 2019/5/19 20:50
-     * @Description: 封装教师角色和除教师角色外在职角色查看成绩功能方法
-     */
-    private String getJson(Long teacherId, GradeFilter gradeFilter,
-                           Integer flag, HttpServletResponse response) throws JsonProcessingException {
-        String json;
-        response.setContentType("application/json;charset=utf-8");
-        List<Long> semesterIds = new ArrayList<>();
-        List<Long> teacherIds = new ArrayList<>();
-        List<Long> courseIds = new ArrayList<>();
-        List<Long> classIds = new ArrayList<>();
-        Integer pageNum = 0;
-        if (gradeFilter == null) {
-           // todo 学期模块获取默认当前学期
-            Long semesterId = 40L;
-            semesterIds.add(semesterId);
-            // 教师id存在
-            if (teacherId != null) {
-                teacherIds.add(teacherId);
+                    pageNum = gradeFilter.getPageNum();
+                }
             }
-        }else {
-            semesterIds = gradeFilter.getSemesterIds();
-            teacherIds = gradeFilter.getTeacherIds();
-            courseIds = gradeFilter.getCourseIds();
-            classIds = gradeFilter.getClassIds();
-            pageNum = gradeFilter.getPageNum() - 1;
-        }
 
-        PageHelper.startPage(pageNum, config.getPageSize());
-        // 根据默认条件或筛选条件获取获取课表信息
-        List<Curriculum> curriculumList = curriculumService.selectCurriculumByCondition(
-                semesterIds, teacherIds, courseIds, classIds
-        );
+            PageHelper.startPage(pageNum, config.getPageSize());
+            // 根据默认条件或筛选条件获取获取课表信息
+            List<Teachingtask> teachingtasks = educateAffairService.selectTeachingTaskByIds(
+                    semesterIds, teacherIds, courseIds, classIds, departmentIds
+            );
 
-
-        // 判空
-        if (CollectionUtils.isEmpty(curriculumList)) {
-            json = Result.build(ResultType.Success).appendData("stuGradeCurriculumVOPageInfo", null).convertIntoJSON();
-        }else {
             // 根据课表信息组装成前端需要的数据
-            List<StuGradeCurriculumVO> stuGradeCurriculumVOS = curriculumList.stream().map(
-                    curriculum -> {
+            List<StuGradeCurriculumVO> stuGradeCurriculumVOS = teachingtasks.stream().map(
+                    teachingtask -> {
                         StuGradeCurriculumVO stuGradeCurriculumVO =
                                 new StuGradeCurriculumVO();
-                        Long universityId = curriculum.getUniversityId();
-                        Long classId = curriculum.getClassId();
-                        Long courseId = curriculum.getCourseId();
-                        Long canlendarId = curriculum.getCanlendarId();
+                        Long universityId = teachingtask.getUniversityId();
+                        Long classId = teachingtask.getClassId();
+                        Long courseId = teachingtask.getCourseId();
+                        Long semesterId = teachingtask.getSemesterId();
+                        Long byWho = teachingtask.getWorkerId();
                         // 获取学校信息 university没数据
-                        /*stuGradeCurriculumVO.setUniversityId(universityId);
-                        University university =
-                                universityService.select(universityId);
-                        if (university == null) {
-                            stuGradeCurriculumVO.setUniversityName(null);
-                        } else {
-                            stuGradeCurriculumVO.setUniversityName(university.getName());
-                        }*/
-                        // 获取学期信息
-                        Canlendar canlendar =
-                                canlendarService.selectByCanlendarId(canlendarId);
-                        if (canlendar == null) {
-                            stuGradeCurriculumVO.setSemesterId(null);
-                            stuGradeCurriculumVO.setSemesterName(null);
-                        } else {
-                            Semester semester =
-                                    semesterService.selectById(canlendar.getSemesterId());
-                            stuGradeCurriculumVO.setSemesterId(canlendar.getSemesterId());
-                            if (semester == null) {
-                                stuGradeCurriculumVO.setSemesterName(null);
-                            } else {
-                                stuGradeCurriculumVO.setSemesterName(semester.getName());
-                            }
-                        }
+                        stuGradeCurriculumVO.setUniversityId(universityId);
+
+                        stuGradeCurriculumVO.setSemesterId(semesterId);
+
                         // 获取课程信息
-                        Course course = null;
+                        CourseDto courseDto = null;
                         stuGradeCurriculumVO.setCourseId(courseId);
-                        try {
-                            course =
-                                    courseDtoService.selectCourseByCourseId(courseId);
-                        } catch (SQLException e) {
-                            e.printStackTrace();
-                        }
-                        if (course == null) {
+
+                        courseDto =
+                                courseDtoService.selectByCourseId(courseId);
+
+                        if (courseDto == null) {
                             stuGradeCurriculumVO.setCourseName(null);
                             stuGradeCurriculumVO.setCourseNumber(null);
                         } else {
-                            stuGradeCurriculumVO.setCourseName(course.getName());
-                            stuGradeCurriculumVO.setCourseNumber(course.getNumber());
+                            stuGradeCurriculumVO.setCourseName(courseDto.getName());
+                            stuGradeCurriculumVO.setCourseNumber(courseDto.getNumber());
+                            stuGradeCurriculumVO.setSpeciesId(courseDto.getSpeciesId());
+                            stuGradeCurriculumVO.setSpeciesName(courseDto.getSpeciesName());
+                            stuGradeCurriculumVO.setCategoryId(courseDto.getCategoryId());
+                            stuGradeCurriculumVO.setCategoryName(courseDto.getCategoryName());
                         }
                         // 获取班级信息
                         stuGradeCurriculumVO.setClassId(classId);
@@ -384,54 +350,50 @@ public class StuGradeMainController {
                         } else {
                             stuGradeCurriculumVO.setClassCode(aClass.getCode());
                             stuGradeCurriculumVO.setClassName(aClass.getName());
-                            studentList
-                                    = studentService.selectByClassId(aClass.getId());
+                            studentList = studentService.selectByClassId(classId);
                             stuGradeCurriculumVO.setClassStudentNumber(studentList.size());
                         }
+
+                        if (studentList.size() == 0) {
+                            stuGradeCurriculumVO.setStuGradeSuccessNumber(null);
+                            stuGradeCurriculumVO.setStuGradeFailNumber(null);
+                            stuGradeCurriculumVO.setTeacherId(byWho);
+                            return stuGradeCurriculumVO;
+                        }
+
                         List<Long> studentIds = studentList.stream().map(
                                 student -> {
                                     return student.getUserId();
                                 }
                         ).collect(Collectors.toList());
+
                         // 获取考试情况人数
                         List<StuGradeMain> stuGradeMains = stuGradeMainService.selectByCurriculum(
-                                universityId, teacherId, stuGradeCurriculumVO.getSemesterId(),
+                                universityId, byWho, stuGradeCurriculumVO.getSemesterId(),
                                 studentIds, courseId, RoleConstant.EMPLOYEE_EXINCLUDE_TEACHER
                         );
 
                         // 判空
                         if (CollectionUtils.isEmpty(stuGradeMains)) {
-                            stuGradeCurriculumVO.setStuGradeSuccessNumber(0);
-                            stuGradeCurriculumVO.setStuGradeFailNumber(0);
+                            stuGradeCurriculumVO.setStuGradeSuccessNumber(null);
+                            stuGradeCurriculumVO.setStuGradeFailNumber(null);
                         } else {
-                            // 查看成绩主表是否以评完分，无则为0
-                            List<StuGradeMain> stuGradeMainCaches = stuGradeMains.stream().filter(
-                                    stuGradeMain -> stuGradeMain.getCache() == GradeConstant.CACHE_VALID
+//
+                            //   steam流通过和不通过人数
+                            List<StuGradeMain> stuGradeMainSuccessList = stuGradeMains.stream().filter(
+                                    stuGradeMain -> {
+                                        return stuGradeMain.getScore() >= 60;
+                                    }
                             ).collect(Collectors.toList());
-                            if (stuGradeMainCaches.size() > 0) {
-                                stuGradeCurriculumVO.setStuGradeSuccessNumber(0);
-                                stuGradeCurriculumVO.setStuGradeFailNumber(0);
-                            }else {
-                                //   steam流通过和不通过人数
-                                List<StuGradeMain> stuGradeMainSuccessList = stuGradeMains.stream().filter(
-                                        stuGradeMain -> {
-                                            return stuGradeMain.getScore() >= 60;
-                                        }
-                                ).collect(Collectors.toList());
-                                List<StuGradeMain> stuGradeMainFailList = stuGradeMains.stream().filter(
-                                        stuGradeMain -> stuGradeMain.getScore() < 60
-                                ).collect(Collectors.toList());
-                                stuGradeCurriculumVO.setStuGradeSuccessNumber(stuGradeMainSuccessList.size());
-                                stuGradeCurriculumVO.setStuGradeFailNumber(stuGradeMainFailList.size());
-                            }
+                            int successNumber = stuGradeMainSuccessList.size();
+                            stuGradeCurriculumVO.setStuGradeSuccessNumber(successNumber);
+                            Integer studentNumber = stuGradeCurriculumVO.getClassStudentNumber();
+                            stuGradeCurriculumVO.setStuGradeFailNumber(studentNumber - successNumber);
 
                         }
 
                         // 获取教师信息
-                        User teacher
-                                = userService.selectUserById(curriculum.getEmployeeId());
-                        stuGradeCurriculumVO.setTeacherId(teacherId);
-                        stuGradeCurriculumVO.setTeacherName(teacher.getUserName());
+                        stuGradeCurriculumVO.setTeacherId(byWho);
                         return stuGradeCurriculumVO;
                     }
             ).collect(Collectors.toList());
@@ -440,11 +402,11 @@ public class StuGradeMainController {
             PageInfo<StuGradeCurriculumVO> stuGradeCurriculumVOPageInfo
                     = new PageInfo<>(stuGradeCurriculumVOS);
             json = Result.build(ResultType.Success).appendData("stuGradeCurriculumVOPageInfo", stuGradeCurriculumVOPageInfo).convertIntoJSON();
+            redisCache.set(cacheName, json);
         }
-        return json;
+        response.setContentType("application/json;charset=utf-8");
+        response.getWriter().write(json);
     }
-//
-     //todo 未完成加缓存
 
     /**
      * @Param [universityId, semesterId, teacherId, courseId, classId, pageNum, response]
@@ -454,7 +416,7 @@ public class StuGradeMainController {
      * @Description: 根据学校id，学期id，教师id,课程id，班级id，页码获取分页的成绩主表信息
      * @Modify: 2019/5/16 添加缓存查询功能和教师、除学生、教师之外的在校角色区别查询
      */
-    @ApiOperation(value = "教师所教学生成绩主表", tags = {"教师角色"})
+    @ApiOperation(value = "教师所教学生成绩主表", notes = "任课教师角色")
     @GetMapping("/tec/list")
     public void getTecList(
             @ApiParam(value = "学校id", required = true)
@@ -483,7 +445,7 @@ public class StuGradeMainController {
      * @Description: 根据学校id，学期id，教师id,课程id，班级id，页码获取分页的成绩主表信息
      * @Modify: 2019/5/17 添加缓存查询功能和教师、除学生、教师之外的在校角色区别查询
      */
-    @ApiOperation(value = "教师所教学生成绩主表", tags = {"教务员", "院长、班主任角色"})
+    @ApiOperation(value = "教师所教学生成绩主表", notes = "非任课教师、教务员、班主任")
     @GetMapping("/employee/list")
     public void getEmployeeList(
             @ApiParam(value = "学校id", required = true)
@@ -509,93 +471,80 @@ public class StuGradeMainController {
      *
      * @Param
      * @Return:
-     * @Author: deschen
+     * @Author: 陈汉槟
      * @Date: 2019/5/19 20:52
      * @Description: 封装教师角色和除教师角色外在职角色查看成绩主表功能方法
      * @Modify: 修改成绩主表显示格式
      */
     private void SetReponse(Long universityId, Long semesterId, Long teacherId,
                             Long courseId, Long classId, int roleFlag, HttpServletResponse response) throws IOException {
-        response.setContentType("application/json;charset=utf-8");
 
 
-//        // 2 todo 获取redis缓存key
-//        String cacheName = null;
+//        // 2 获取redis缓存key
+        String cacheName;
+        if (roleFlag == RoleConstant.TEACHER) {
+             cacheName = String.format(CacheNameHelper.TecList_CacheName,
+                    universityId, semesterId, courseId, classId, teacherId);
+        }else {
+            cacheName = String.format(CacheNameHelper.EmployeeList_CacheName,
+                    universityId, semesterId, courseId, classId, teacherId);
+        }
 
-        // 3 todo 获取缓存数据
-//        String json = redisCache.get(cacheName);
-        String json = null;
+        // 3 获取缓存数据
+        String json = redisCache.get(cacheName);
+//        String json = null;
         if (json == null) {
             // 3.1 根据班级模块班级id获取学生集合
             List<Student> students = studentService.selectByClassId(classId);
-            List<Long> studentIds = students.stream().map(
-                    student -> {
-                        return student.getUserId();
-                    }
-            ).collect(Collectors.toList());
-            // 3.2 根据学校id，学期id，教师id，课程id，学生id集合获取成绩主表
-            List<StuGradeMain> stuGradeMains = stuGradeMainService.selectByCurriculum(
-                    universityId, teacherId, semesterId, studentIds, courseId, roleFlag
-            );
-
-
-            List<StuGradeVO> stuGradeVOS = stuGradeMains.stream().map(
-                    stuGradeMain -> {
-                        StuGradeVO stuGradeVO = new StuGradeVO();
-                        BeanUtils.copyProperties(stuGradeMain, stuGradeVO);
-
-                       /* //  根据学院id获取学院信息 todo university表没数据
-                        University university =
-                                universityService.select(stuGradeMain.getUniversityId());
-                        stuGradeVO.setUniversityName(university.getName());*/
-
-                        // 根据用户模块获取学生信息
-                        List<Student> studentList =
-                                studentService.selectByUserId(stuGradeMain.getStudentId());
-                        Student student = studentList.get(0);
-                        Long studentUserId = student.getUserId();
-                        User user = userService.selectUserById(studentUserId);
-                        String studentName = user.getUserName();
-                        String stuNo = student.getStuNo();
-                        Long studentClassId = student.getClassId();
-                        // 班级信息
-                        Class classEntity = classService.select(classId);
-                        String className = classEntity.getName();
-                        //教师信息
-                        User teacher = userService.selectUserById(stuGradeMain.getByWho());
-                        String teacherName = teacher.getUserName();
-                        stuGradeVO.setStudentId(studentUserId);
-                        stuGradeVO.setStudentName(studentName);
-                        stuGradeVO.setStuNo(stuNo);
-                        stuGradeVO.setClassId(studentClassId);
-                        stuGradeVO.setClassName(className);
-                        stuGradeVO.setWho(teacherName);
-
-                        // 根据学期模块获取学期
-                        Semester semester =
-                                semesterService.selectById(stuGradeVO.getSemesterId());
-                        stuGradeVO.setSemesterName(semester.getName());
-
-                        // 根据课程id获取课程信息
-                        CourseDto courseDto = null;
-                        try {
-                            courseDto = courseDtoService.selectByCourseId(stuGradeVO.getCourseId());
-                        } catch (SQLException e) {
-                            e.printStackTrace();
+            List<GradeVO> stuGradeVOS = new ArrayList<>();
+            if (!CollectionUtils.isEmpty(students)){
+                List<Long> studentIds = students.stream().map(
+                        student -> {
+                            return student.getUserId();
                         }
-                        stuGradeVO.setSpeciesId(courseDto.getSpeciesId());
-                        stuGradeVO.setCategoryId(courseDto.getCategoryId());
-                        stuGradeVO.setCategoryName(courseDto.getCategoryName());
-                        stuGradeVO.setSpeciesName(courseDto.getSpeciesName());
-                        stuGradeVO.setNumber(courseDto.getNumber());
-                        stuGradeVO.setCourseName(courseDto.getName());
-                        return stuGradeVO;
-                    }
-            ).collect(Collectors.toList());
+                ).collect(Collectors.toList());
+                // 3.2 根据学校id，学期id，教师id，课程id，学生id集合获取成绩主表
+                List<StuGradeMain> stuGradeMains = stuGradeMainService.selectByCurriculum(
+                        universityId, teacherId, semesterId, studentIds, courseId, roleFlag
+                );
+
+
+                // 班级
+                Class aClass = classService.select(classId);
+
+                // 课程
+                Course course = courseForGradeService.selectCourseByCourseId(courseId);
+
+                stuGradeVOS = stuGradeMains.stream().map(
+                        stuGradeMain -> {
+                            GradeVO stuGradeVO = new GradeVO();
+                            BeanUtils.copyProperties(stuGradeMain, stuGradeVO);
+
+                            Student student = studentService.selectById(stuGradeMain.getStudentId());
+                            Long studentUserId = student.getUserId();
+                            User user = userService.selectUserById(studentUserId);
+                            stuGradeVO.setStuNo(student.getStuNo());
+                            stuGradeVO.setStudentName(user.getUserName());
+
+                            // 班级信息
+                            stuGradeVO.setClassId(classId);
+                            stuGradeVO.setClassName(aClass.getName());
+                            stuGradeVO.setClassCode(aClass.getCode());
+
+                            stuGradeVO.setCourseName(course.getName());
+                            stuGradeVO.setCourseNumber(course.getNumber());
+                            // 成绩项
+                            List<StuGradeItemDto> stuGradeItemDtos =
+                                    stuGradeItemService.selectByStuGradeMainId(stuGradeMain.getId(), roleFlag);
+                            stuGradeVO.setStuGradeItemDtos(stuGradeItemDtos);
+                            return stuGradeVO;
+                        }
+                ).collect(Collectors.toList());
+            }
 
 
             json = Result.build(ResultType.Success).appendData("stuGradeVOS", stuGradeVOS).convertIntoJSON();
-//            redisCache.set(cacheName, json);
+            redisCache.set(cacheName, json);
         }
         response.setContentType("application/json;charset=utf-8");
         response.getWriter().write(json);
@@ -609,40 +558,42 @@ public class StuGradeMainController {
      * @Date: 2019/4/28 9:58
      * @Description:  根据学校id，学期id，教师id,课程id，班级id创建成绩主表信息
      */
-    @ApiOperation(value = "创建学生成绩主表,主要用于查询成绩不存在，就创建", tags = {"教师角色"})
-    @PostMapping("/tec")
-    public Result createStuGradeMain(
+    @ApiOperation(value = "创建学生成绩主表,课程组长创建完课程项", notes = "课程组长")
+    @PostMapping("/tec/list")
+    public Result createStuGradeMains(
             @ApiParam(value = "学院Id", required = true)
             @RequestParam(name = "universityId", required = true) Long universityId,
             @ApiParam(value = "学期Id", required = true)
             @RequestParam(name = "semesterId", required = true) Long semesterId,
             @ApiParam(value = "课程id", required = true)
-            @RequestParam(name = "courseId", required = true) Long courseId,
-            @ApiParam(value = "班级id", required = true)
-            @RequestParam(name = "classId", required = true) Long classId,
-            @ApiParam(value = "教师id", required = true)
-            @RequestParam(name = "teacherId", required = true) Long teacherId
+            @RequestParam(name = "courseId", required = true) Long courseId
     ) {
-        List<Student> students = studentService.selectByClassId(classId);
-        List<Long> studentIds = students.stream().map(
-                student -> {
-                    return student.getUserId();
-                }
-        ).collect(Collectors.toList());
-        boolean success = stuGradeMainService.insertStuGradeMainByIds(
-                universityId, teacherId, semesterId, studentIds, courseId
+        List<Teachingtask> teachingtasks = educateAffairService.selectTeachingTaskById(
+                universityId, semesterId, courseId
+        );
+
+        List<StuGradeMain> stuGradeMains = stuGradeMainService.selectByUniversityIdAndCourseIdAndSemesterId(
+                universityId, semesterId, courseId
+        );
+
+        if (!CollectionUtils.isEmpty(stuGradeMains)) {
+            throw new RuntimeException("成绩主表已存在");
+        }
+
+        boolean success = stuGradeMainService.insertStuGradeMainByIdsAndTeachingTasks(
+                universityId, semesterId, courseId, teachingtasks, GradeConstant.MAIN_STATE_NOSCORE
         );
         if (success) {
-            // todo 删除缓存
-//            redisCache.deleteByPaterm(CourseItemController.CacheNameHelper.List_All_CacheNamePrefix);
+            redisCache.delete(CacheNameHelper.ListAll_CacheName);
             return Result.build(ResultType.Success);
         } else {
             return Result.build(ResultType.Failed);
         }
     }
 
-    /*
-    @ApiOperation(value = "最终提交成绩", tags = {"教师角色"})
+
+
+    @ApiOperation(value = "最终提交成绩", notes = "教师角色")
     @PutMapping("/tec/list")
     public Result updateStuGradeMain(
             @ApiParam(value = "成绩主表id集合", required = true)
@@ -652,15 +603,106 @@ public class StuGradeMainController {
             return Result.build(ResultType.ParamError);
         }
 
-        stuGradeMainIds.stream().forEach(
-                stuGradeMainId -> {
-                    StuGradeMain stuGradeMain =
-                            stuGradeMainService.selectByStuGradeMainId(stuGradeMainId);
-                    stuGradeMain.setCache(GradeConstant.CACHE_INVALID);
-                    stuGradeMainService.updateStuGradeMain(stuGradeMain);
+        List<StuGradeMain> stuGradeMains =
+                stuGradeMainService.selectStuGradeMainIds(stuGradeMainIds);
+        stuGradeMains.stream().forEach(
+                stuGradeMain -> {
+                    if (stuGradeMain.getCache() == GradeConstant.CACHE_INVALID) {
+                        throw new RuntimeException("成绩已提交");
+                    }
                 }
         );
-    }*/
 
+        stuGradeMainIds.stream().forEach(
+                stuGradeMainId -> {
+                    stuGradeMainService.updateStuGradeMainStateToCacheInvalid(stuGradeMainId);
+                    List<StuGradeItemDto> stuGradeItemDtos =
+                            stuGradeItemService.selectByStuGradeMainId(stuGradeMainId, RoleConstant.TEACHER);
+                    stuGradeItemService.updateStuItemGradeStateToCacheInvalid(stuGradeMainId);
+                    List<Long> stuItemGradeIds =
+                            stuGradeItemDtos.stream().map(stuGradeItemDto -> stuGradeItemDto.getId()).collect(Collectors.toList());
+                    stuGradeItemDetailService.updateStuGradeItemDetailStateToCacheInvalid(stuItemGradeIds);
+                }
+        );
+        redisCache.delete(CacheNameHelper.ListAll_CacheName);
+        return Result.build(ResultType.Success);
+    }
+
+    @ApiOperation(value = "获取某学期某班级某课的考勤记录", notes = "任课教师角色")
+    @GetMapping("/tec/stuAbsence")
+    public void getStuAbsence(
+            @ApiParam(value = "学期Id", required = true)
+            @RequestParam(name = "semesterId", required = true) Long semesterId,
+            @ApiParam(value = "课程id", required = true)
+            @RequestParam(name = "courseId", required = true) Long courseId,
+            @ApiParam(value = "班级id", required = true)
+            @RequestParam(name = "classId", required = true) Long classId,
+            HttpServletResponse response
+    ) throws IOException {
+        String cacheName = String.format(
+                CacheNameHelper.StuAbsence_CachePrefix,
+                semesterId, courseId, classId
+        );
+        response.setContentType("application/json;charset=utf-8");
+        String json = redisCache.get(cacheName);
+        if (json == null) {
+            List<Student> studentList =
+                    studentService.selectByClassId(classId);
+            List<String> stuAbsences = studentList.stream().map(
+                    student -> {
+                        String staticc = stuAbSenceService.staticc(student.getUserId(),
+                                semesterId, courseId);
+                        return staticc;
+                    }
+            ).collect(Collectors.toList());
+            json = Result.build(ResultType.Success).appendData("stuAbsences", stuAbsences).convertIntoJSON();
+            redisCache.set(cacheName, json);
+        }
+
+        response.getWriter().write(json);
+    }
+
+    @ApiOperation(value = "创建成绩，用于重修的", notes = "任课教师角色")
+    @PostMapping("/tec/rebuild")
+    public Result  rebuildStuGradeMain(
+            @ApiParam(value = "stuGradeMainId", required = true)
+            @RequestParam(name = "stuGradeMainId", required = true) Long stuGradeMainId,
+            @ApiParam(value = "成绩状态", required = true)
+            @RequestParam(name = "state", required = true) Integer state
+    ) {
+        StuGradeMain stuGradeMain =
+                stuGradeMainService.selectByStuGradeMainId(stuGradeMainId);
+        if (stuGradeMain.getState() < GradeConstant.MAIN_STATE_NORMAL) {
+            throw new RuntimeException("成绩未提交");
+        }
+        stuGradeMainService.rebulidStuGradeMainsSelective(
+                stuGradeMainId, state
+        );
+        redisCache.delete(CacheNameHelper.ListAll_CacheName);
+        return Result.build(ResultType.Success);
+    }
+
+    @ApiOperation(value = "根据学校获取课程", notes = "所有角色")
+    @GetMapping("/courses/{universityId}")
+    public void getCourses(
+            @ApiParam(value = "学校id", required = true)
+            @PathVariable Long universityId,
+            HttpServletResponse response
+    ) throws IOException {
+        String cacheName = String.format(
+                CacheNameHelper.Course_CachePrefix,
+                universityId
+        );
+        String json = redisCache.get(cacheName);
+        if (json == null) {
+            List<Course> courses =
+                    courseDtoService.selectByUniversityId(universityId);
+            response.setContentType("application/json;charset=utf-8");
+            json = Result.build(ResultType.Success).appendData("courses", courses).convertIntoJSON();
+            redisCache.set(cacheName, json);
+        }
+        response.setContentType("application/json;charset=utf-8");
+        response.getWriter().write(json);
+    }
 
 }

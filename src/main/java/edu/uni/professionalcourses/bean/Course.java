@@ -15,6 +15,10 @@ public class Course {
 
     private String ename;
 
+    private Long departmentId;
+
+    private Long specialtyId;
+
     private Long speciesId;
 
     private Long categoryId;
@@ -83,6 +87,22 @@ public class Course {
 
     public void setEname(String ename) {
         this.ename = ename == null ? null : ename.trim();
+    }
+
+    public Long getDepartmentId() {
+        return departmentId;
+    }
+
+    public void setDepartmentId(Long departmentId) {
+        this.departmentId = departmentId;
+    }
+
+    public Long getSpecialtyId() {
+        return specialtyId;
+    }
+
+    public void setSpecialtyId(Long specialtyId) {
+        this.specialtyId = specialtyId;
     }
 
     public Long getSpeciesId() {
@@ -180,8 +200,8 @@ public class Course {
     public void setTeachRequire(String teachRequire) {
         this.teachRequire = teachRequire == null ? null : teachRequire.trim();
     }
-
     @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")
+
     public Date getDatetime() {
         return datetime;
     }

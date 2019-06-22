@@ -1,5 +1,6 @@
 package edu.uni.grademanagement.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.uni.grademanagement.constants.GradeConstant;
 import lombok.Data;
 
@@ -17,6 +18,7 @@ import java.util.List;
 @Data
 public class StuGradeItemDto implements Serializable{
 
+    @JsonProperty("stuItemGradeId")
     private Long id;
 
     private Long universityId;
@@ -29,6 +31,7 @@ public class StuGradeItemDto implements Serializable{
 
     private String note;
 
+    @JsonProperty("teacherId")
     private Long byWho;
 
     private Long courseId;

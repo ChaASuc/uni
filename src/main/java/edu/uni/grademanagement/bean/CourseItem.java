@@ -1,14 +1,13 @@
 package edu.uni.grademanagement.bean;
 
-import edu.uni.grademanagement.constants.GradeConstant;
-
-import javax.validation.constraints.NotEmpty;
 import java.util.Date;
 
 public class CourseItem {
     private Long id;
 
     private Long universityId;
+
+    private Long semesterId;
 
     private Long courseId;
 
@@ -38,6 +37,14 @@ public class CourseItem {
 
     public void setUniversityId(Long universityId) {
         this.universityId = universityId;
+    }
+
+    public Long getSemesterId() {
+        return semesterId;
+    }
+
+    public void setSemesterId(Long semesterId) {
+        this.semesterId = semesterId;
     }
 
     public Long getCourseId() {

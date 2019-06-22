@@ -48,27 +48,24 @@ public interface DepartmentSubdepartmentService {
 
     /**
      * 分学校分页查询一二级部门关系
-     * @param pageNum
      * @param universityId
      * @return
      */
-    PageInfo<DepartmentSubdepartment> selectPageByUniversity(int pageNum, long universityId);
+    List<DepartmentSubdepartment> selectPageByUniversity(long universityId);
 
     /**
      * 分一级部门分页查询部门关系
-     * @param pageNum
      * @param departmentId
      * @return
      */
-    PageInfo<DepartmentSubdepartment> selectPageByDepartment(int pageNum, long departmentId);
+    List<DepartmentSubdepartment> selectPageByDepartment(long departmentId);
 
     /**
      * 分二级部门分页查询部门关系
-     * @param pageNum
      * @param subdepartmentId
      * @return
      */
-    PageInfo<DepartmentSubdepartment> selectPageBySubdepartment(int pageNum, long subdepartmentId);
+    List<DepartmentSubdepartment> selectPageBySubdepartment(long subdepartmentId);
 
     /**
      * 查找所有部门关系

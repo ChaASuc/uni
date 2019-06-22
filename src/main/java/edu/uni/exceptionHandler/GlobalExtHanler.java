@@ -2,8 +2,10 @@ package edu.uni.exceptionHandler;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import edu.uni.bean.Result;
 import edu.uni.bean.ResultType;
+import edu.uni.utils.JsonUtils;
 import edu.uni.utils.LogUtils;
 import org.springframework.dao.PermissionDeniedDataAccessException;
 import org.springframework.http.HttpStatus;
@@ -19,7 +21,8 @@ public class GlobalExtHanler {
 	 */
 	@ExceptionHandler(Exception.class)
 	@ResponseBody
-	public Result handlerException(Exception e, HttpServletRequest request) {
+	public Result handlerException(Exception e, HttpServletRequest request) throws JsonProcessingException {
+//		System.out.println(JsonUtils.obj2String(e));
 		logUilts.logException(e);
 		return Result.build(ResultType.Exception, e.getMessage()).appendData("Exception", e.getClass().getName());
 	}

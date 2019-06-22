@@ -33,6 +33,36 @@ public class ApprovalStepIncharge {
         return id;
     }
 
+    public ApprovalStepIncharge() {
+    }
+
+    public ApprovalStepIncharge(Long id, Long universityId, Long approvalMainId, String name, Integer step, Long roleId, Date datetime, Long byWho, Boolean deleted, String roleName, Integer infoType, Long applyUserId) {
+        this.id = id;
+        this.universityId = universityId;
+        this.approvalMainId = approvalMainId;
+        this.name = name;
+        this.step = step;
+        this.roleId = roleId;
+        this.datetime = datetime;
+        this.byWho = byWho;
+        this.deleted = deleted;
+    }
+
+    @Override
+    public String toString() {
+        return "ApprovalStepIncharge{" +
+                "id=" + id +
+                ", universityId=" + universityId +
+                ", approvalMainId=" + approvalMainId +
+                ", name='" + name + '\'' +
+                ", step=" + step +
+                ", roleId=" + roleId +
+                ", datetime=" + datetime +
+                ", byWho=" + byWho +
+                ", deleted=" + deleted +
+                '}';
+    }
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -58,7 +88,7 @@ public class ApprovalStepIncharge {
     }
 
     public void setName(String name) {
-        this.name = name == null ? null : name.trim();
+        this.name = name;
     }
 
     public Integer getStep() {
@@ -101,18 +131,4 @@ public class ApprovalStepIncharge {
         this.deleted = deleted;
     }
 
-    @Override
-    public String toString() {
-        return "ApprovalStepIncharge{" +
-                "id=" + id +
-                ", universityId=" + universityId +
-                ", approvalMainId=" + approvalMainId +
-                ", name='" + name + '\'' +
-                ", step=" + step +
-                ", roleId=" + roleId +
-                ", datetime=" + datetime +
-                ", byWho=" + byWho +
-                ", deleted=" + deleted +
-                '}';
-    }
 }

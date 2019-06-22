@@ -60,7 +60,7 @@ public interface ClassmateService {
      * @param classId
      * @return
      */
-    PageInfo<Classmate> selectPageByClass(int pageNum, long classId);
+    List<Classmate> selectPageByClass(long classId);
 
     /**
      * 分学校分页查询班级人员记录

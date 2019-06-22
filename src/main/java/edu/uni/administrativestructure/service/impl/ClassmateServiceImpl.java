@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * author：黄育林
  * create: 2019.4.25
- * modified: 2019.5.10
+ * modified: 2019.5.11
  * 功能：班级人员实现类
  */
 @Service
@@ -37,16 +37,17 @@ public class ClassmateServiceImpl implements ClassmateService {
         if(classmateMapper.insert(classmate)<=0) {
             return false;
         }
-        //插入关系表
-        ClassmatePosition classmatePosition =new ClassmatePosition();
-        classmatePosition.setUniversityId(classmate.getUniversityId());
-        classmatePosition.setByWho(classmate.getByWho());
-        classmatePosition.setClassmateId(classmate.getId());
-        classmatePosition.setDatetime(classmate.getDatetime());
-        classmatePosition.setDeleted(classmate.getDeleted());
-        if(classmatePositionMapper.insert(classmatePosition)<=0){
-            return false;
-        } else
+//        //插入关系表
+//        ClassmatePosition classmatePosition =new ClassmatePosition();
+//        classmatePosition.setUniversityId(classmate.getUniversityId());
+//        classmatePosition.setByWho(classmate.getByWho());
+//        classmatePosition.setClassmateId(classmate.getId());
+//        classmatePosition.setDatetime(classmate.getDatetime());
+//        classmatePosition.setDeleted(classmate.getDeleted());
+//        if(classmatePositionMapper.insert(classmatePosition)<=0){
+//            return false;
+//        }
+        else
             return true;
     }
 
@@ -112,8 +113,8 @@ public class ClassmateServiceImpl implements ClassmateService {
     }
 
     @Override
-    public PageInfo<Classmate> selectPageByClass(int pageNum, long classId) {
-        PageHelper.startPage(pageNum, globalConfig.getPageSize());    // 开启分页查询，第一次切仅第一次查询时生效
+    public List<Classmate> selectPageByClass( long classId) {
+//        PageHelper.startPage(pageNum, globalConfig.getPageSize());    // 开启分页查询，第一次切仅第一次查询时生效
         // 创建查询条件
         ClassmateExample example = new ClassmateExample();
         ClassmateExample.Criteria criteria = example.createCriteria();
@@ -121,7 +122,7 @@ public class ClassmateServiceImpl implements ClassmateService {
         // 根据条件查询
         List<Classmate> classmates= classmateMapper.selectByExample(example);   //  无条件查找部门
         if(classmates != null)
-            return new PageInfo<>(classmates);
+            return classmates;
         else
             return null;
     }

@@ -37,10 +37,10 @@ public interface ApprovalMainService {
     /**
      * Author: laizhouhao 15:44 2019/4/29
      * @param approvalMain
-     * @return boolean
+     * @return Integer
      * @apiNote: 用于增加ApprovalMain表的一个记录
      */
-    boolean insert(ApprovalMain approvalMain);
+    Integer insert(ApprovalMain approvalMain);
 
     /**
      * Author: laizhouhao 15:46 2019/4/29
@@ -49,6 +49,14 @@ public interface ApprovalMainService {
      * @apiNote: 用于更新ApprovalMain表的一个记录
      */
     boolean update(ApprovalMain approvalMain);
+
+    /**
+     * Author: mokuanyuan 20:12 2019/5/10
+     * @param approvalMain
+     * @return boolean
+     * @apiNote: 更新审批规定记录（因为对审批步骤详情表进行了某些操作而导致的更新）
+     */
+    boolean updateForStepIncharge(ApprovalMain approvalMain);
 
     /**
      * Author: laizhouhao 15:47 2019/4/29

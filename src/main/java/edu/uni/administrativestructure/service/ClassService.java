@@ -48,20 +48,18 @@ public interface ClassService {
     PageInfo<Class> selectPage(int pageNum);
 
     /**
-     * 分学校分页查询一二级部门关系
-     * @param pageNum
+     * 分学校查询一二级部门关系
      * @param universityId
      * @return
      */
-    PageInfo<Class> selectPageByUniversity(int pageNum, long universityId);
+    List<Class> selectPageByUniversity(long universityId);
 
     /**
-     * 分一级部门分页查询部门关系
-     * @param pageNum
+     * 分一级部门查询部门关系
      * @param departmentId
      * @return
      */
-    PageInfo<Class> selectPageByDepartment(int pageNum, long departmentId);
+    List<Class> selectPageByDepartment(long departmentId);
 
     /**
      * 分二级部门分页查询部门关系
@@ -71,5 +69,19 @@ public interface ClassService {
      */
     PageInfo<Class> selectPageBySpecialty(int pageNum, long specialtyId);
 
+    //    遍历所有
+    List<Class> selectAll();
+    /*
+    @param code
+    @return
+    根据code查找班级
+    */
+    Class selectByCode(String code);
+    //根据专业id查班级
+    List<Class> selectSpecilty(long specialty_id);
+    /*
+     * 根据部门名称模糊查询记录
+     * */
+    List<Class> selectLikeName(String name);
 
 }

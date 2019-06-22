@@ -115,8 +115,8 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     //根据学校id分页查询部门
     @Override
-    public PageInfo<Department> selectPageByUniversity(int pageNum, long universityId) {
-        PageHelper.startPage(pageNum, globalConfig.getPageSize());    // 开启分页查询，第一次切仅第一次查询时生效
+    public List<Department> selectPageByUniversity(long universityId) {
+//        PageHelper.startPage(pageNum, globalConfig.getPageSize());    // 开启分页查询，第一次切仅第一次查询时生效
         // 创建查询条件
         DepartmentExample example = new DepartmentExample();
         DepartmentExample.Criteria criteria = example.createCriteria();
@@ -124,7 +124,7 @@ public class DepartmentServiceImpl implements DepartmentService {
         // 根据条件查询
         List<Department> departments = departmentMapper.selectByExample(example);
         if(departments != null)
-            return new PageInfo<>(departments);
+            return departments;
         else
             return null;
     }
@@ -136,6 +136,23 @@ public class DepartmentServiceImpl implements DepartmentService {
         DepartmentExample.Criteria criteria = example.createCriteria();
         criteria.andDeletedEqualTo(false);
 
+        return departmentMapper.selectByExample(example);
+    }
+
+    @Override
+    public List<Department> selectLikeName(String name) {
+        DepartmentExample example = new DepartmentExample();
+        DepartmentExample.Criteria criteria = example.createCriteria();
+        criteria.andNameLike("%"+name+"%").andDeletedEqualTo(false);
+        return departmentMapper.selectByExample(example);
+    }
+
+    @Override
+    public List<Department> selectLikeDepartmentName(String name) {
+//        String ename="学院";
+        DepartmentExample example = new DepartmentExample();
+        DepartmentExample.Criteria criteria = example.createCriteria();
+        criteria.andNameLike("%"+name+"").andDeletedEqualTo(false);
         return departmentMapper.selectByExample(example);
     }
 }

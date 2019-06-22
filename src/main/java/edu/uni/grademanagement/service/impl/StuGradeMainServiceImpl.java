@@ -1,16 +1,24 @@
 package edu.uni.grademanagement.service.impl;
 
+import edu.uni.educateAffair.bean.Teachingtask;
 import edu.uni.grademanagement.bean.StuGradeMain;
 import edu.uni.grademanagement.bean.StuGradeMainExample;
+import edu.uni.grademanagement.bean.StuItemGrade;
 import edu.uni.grademanagement.config.GradeManagementConfig;
 import edu.uni.grademanagement.constants.GradeConstant;
 import edu.uni.grademanagement.constants.RoleConstant;
 import edu.uni.grademanagement.mapper.StuGradeMainMapper;
+import edu.uni.grademanagement.mapper.StuItemGradeMapper;
+import edu.uni.grademanagement.service.StuGradeItemService;
 import edu.uni.grademanagement.service.StuGradeMainService;
+import edu.uni.userBaseInfo1.bean.Student;
+import edu.uni.userBaseInfo1.bean.StudentExample;
+import edu.uni.userBaseInfo1.mapper.StudentMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,8 +39,15 @@ public class StuGradeMainServiceImpl implements StuGradeMainService {
 
     @Autowired
     private StuGradeMainMapper stuGradeMainMapper;
+
     @Autowired
     private GradeManagementConfig config;
+
+    @Autowired
+    private StudentMapper studentMapper;
+
+    @Autowired
+    private StuGradeItemService stuGradeItemService;
 
     /*根据学生id查询成绩*/
     /*@Override
@@ -78,7 +93,7 @@ public class StuGradeMainServiceImpl implements StuGradeMainService {
      */
     public List<StuGradeMain> selectByCurriculum(
             Long universityId, Long teacherId, Long semesterId,
-            List<Long> studentIds, Long courseId, int flag) {
+            List<Long> studentIds, Long courseId, Integer flag) {
 
         // 添加条件
         StuGradeMainExample example = new StuGradeMainExample();
@@ -133,13 +148,18 @@ public class StuGradeMainServiceImpl implements StuGradeMainService {
      * @Description: 根据成绩主表id集合获取学生主表成绩集合
      */
     public List<StuGradeMain> selectStuGradeMainIds(List<Long> stuGradeMainIds) {
-        List<StuGradeMain> stuGradeMains = stuGradeMainIds.stream().map(
+        StuGradeMainExample stuGradeMainExample = new StuGradeMainExample();
+        stuGradeMainExample.createCriteria()
+                .andIdIn(stuGradeMainIds);
+        List<StuGradeMain> stuGradeMainss =
+                stuGradeMainMapper.selectByExample(stuGradeMainExample);
+        /*List<StuGradeMain> stuGradeMains = stuGradeMainIds.stream().map(
                 stuGradeMainId -> {
                     StuGradeMain stuGradeMain = stuGradeMainMapper.selectByPrimaryKey(stuGradeMainId);
                     return stuGradeMain;
                 }
-        ).collect(Collectors.toList());
-        return stuGradeMains;
+        ).collect(Collectors.toList());*/
+        return stuGradeMainss;
     }
 
     @Override
@@ -155,7 +175,7 @@ public class StuGradeMainServiceImpl implements StuGradeMainService {
      */
     @Transactional
     public boolean insertStuGradeMainByIds(Long universityId, Long teacherId, Long semesterId,
-                                           List<Long> studentIds, Long courseId) {
+                                           List<Long> studentIds, Long courseId, Integer state) {
         List<StuGradeMain> stuGradeMains = studentIds.stream().map(
                 studentid -> {
                     StuGradeMain stuGradeMain = new StuGradeMain();
@@ -164,15 +184,19 @@ public class StuGradeMainServiceImpl implements StuGradeMainService {
                     stuGradeMain.setSemesterId(semesterId);
                     stuGradeMain.setCourseId(courseId);
                     stuGradeMain.setByWho(teacherId);
+                    stuGradeMain.setState(state);
+                    stuGradeMain.setDeleted(GradeConstant.RECORD_VALID);
+                    int success = stuGradeMainMapper.insertSelective(stuGradeMain);
+                    if (success == 0) {
+                        throw new RuntimeException("成绩主表更新失败");
+                    }
                     return stuGradeMain;
                 }
         ).collect(Collectors.toList());
-        int i = stuGradeMainMapper.insertStuGradeMains(stuGradeMains);
-        if (i != studentIds.size()) {
-            return false;
-        }
+
         return true;
     }
+
 
     @Override
 
@@ -261,8 +285,15 @@ public class StuGradeMainServiceImpl implements StuGradeMainService {
     }*/
 
     @Override
-    public boolean updateStuGradeMainStateToStudentSee(StuGradeMain stuGradeMain) {
-        return false;
+    public void updateStuGradeMainStateToCacheInvalid(Long stuGradeMainId) {
+        StuGradeMain stuGradeMain = new StuGradeMain();
+        stuGradeMain.setId(stuGradeMainId);
+        stuGradeMain.setCache(GradeConstant.CACHE_INVALID);
+        stuGradeMain.setState(GradeConstant.MAIN_STATE_NORMAL);
+        int success = stuGradeMainMapper.updateByPrimaryKeySelective(stuGradeMain);
+        if (success == 0) {
+            throw new RuntimeException("成绩主表更新失败");
+        }
     }
 
     @Override
@@ -289,12 +320,113 @@ public class StuGradeMainServiceImpl implements StuGradeMainService {
      *
      * @Param [stuGradeMainId]
      * @Return:edu.uni.grademanagement.bean.StuGradeMain
-     * @Author: deschen
+     * @Author: 陈汉槟
      * @Date: 2019/5/21 14:14
      * @Description: 根据成绩主表id查询成绩主表
      */
     public StuGradeMain selectByStuGradeMainId(Long stuGradeMainId) {
         StuGradeMain stuGradeMain = stuGradeMainMapper.selectByPrimaryKey(stuGradeMainId);
         return stuGradeMain;
+    }
+
+    @Override
+    @Transactional
+    public boolean insertStuGradeMainByIdsAndTeachingTasks(Long universityId,
+                                   Long semesterId, Long courseId, List<Teachingtask> teachingtasks,
+                                                           Integer state) {
+
+        teachingtasks.stream().forEach(
+                teachingtask -> {
+                    Long classId = teachingtask.getClassId();
+                    Long teacherId = teachingtask.getWorkerId();
+                    StudentExample studentExample = new StudentExample();
+                    studentExample.createCriteria()
+                            .andClassIdEqualTo(classId)
+                            .andDeletedEqualTo(false);
+                    List<Student> studentList =
+                            studentMapper.selectByExample(studentExample);
+//                    List<Long> studentIds =
+//                            studentList.stream().map(Student::getUserId).collect(Collectors.toList());
+                    List<StuGradeMain> stuGradeMains = studentList.stream().map(
+                            student -> {
+                                Long studentId = student.getUserId();
+                                StuGradeMain stuGradeMain = new StuGradeMain();
+                                stuGradeMain.setUniversityId(universityId);
+                                stuGradeMain.setSemesterId(semesterId);
+                                stuGradeMain.setCourseId(courseId);
+                                stuGradeMain.setStudentId(studentId);
+                                stuGradeMain.setByWho(teacherId);
+                                return stuGradeMain;
+                            }
+                    ).collect(Collectors.toList());
+
+                    int success = stuGradeMainMapper.insertStuGradeMains(stuGradeMains);
+                    if (success == 0) {
+                        throw new RuntimeException("成绩主表创建失败");
+                    }
+
+                }
+
+        );
+        return true;
+    }
+
+    @Override
+    public List<StuGradeMain> selectByUniversityIdAndCourseIdAndSemesterId(Long universityId, Long semesterId, Long courseId) {
+        StuGradeMainExample stuGradeMainExample = new StuGradeMainExample();
+        stuGradeMainExample.createCriteria()
+                .andUniversityIdEqualTo(universityId)
+                .andSemesterIdEqualTo(semesterId)
+                .andCourseIdEqualTo(courseId)
+                .andDeletedEqualTo(GradeConstant.RECORD_VALID);
+        List<StuGradeMain> stuGradeMains =
+                stuGradeMainMapper.selectByExample(stuGradeMainExample);
+        return stuGradeMains;
+    }
+
+    @Override
+    @Transactional
+    public void rebulidStuGradeMainsSelective(
+            Long stuGradeMainId, Integer state) {
+        StuGradeMain stuGradeMain =
+                stuGradeMainMapper.selectByPrimaryKey(stuGradeMainId);
+        stuGradeMain.setId(null);
+        stuGradeMain.setScore(0d);
+        stuGradeMain.setPoint(0d);
+        stuGradeMain.setState(state);
+        stuGradeMain.setCache(GradeConstant.CACHE_VALID);
+        int insertSuccess =
+                stuGradeMainMapper.insertSelective(stuGradeMain);
+        if (insertSuccess == 0) {
+            throw new RuntimeException("重修成绩创建失败");
+        }
+
+        Long universityId = stuGradeMain.getUniversityId();
+        Long studentId = stuGradeMain.getStudentId();
+        Long semesterId = stuGradeMain.getSemesterId();
+        Long courseId = stuGradeMain.getCourseId();
+        Long byWho = stuGradeMain.getByWho();
+
+        StuGradeMainExample stuGradeMainExample = new StuGradeMainExample();
+        stuGradeMainExample.createCriteria()
+                .andUniversityIdEqualTo(universityId)
+                .andSemesterIdEqualTo(semesterId)
+                .andCourseIdEqualTo(courseId)
+                .andStudentIdEqualTo(studentId)
+                .andByWhoEqualTo(byWho)
+                .andStateEqualTo(state)
+                .andDeletedEqualTo(GradeConstant.RECORD_VALID);
+
+        List<StuGradeMain> stuGradeMains =
+                stuGradeMainMapper.selectByExample(stuGradeMainExample);
+        if (CollectionUtils.isEmpty(stuGradeMains) || stuGradeMains.size() != 1) {
+            throw new RuntimeException("重修成绩创建失败");
+        }
+
+        Long rebulidStuGradeMainId = stuGradeMains.get(0).getId();
+
+        stuGradeItemService.rebulidStuGradeItemSelective(
+                stuGradeMainId, rebulidStuGradeMainId, RoleConstant.TEACHER);
+
     }
 }

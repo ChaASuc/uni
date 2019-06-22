@@ -2,15 +2,26 @@ package edu.uni.userBaseInfo1.service.impl;
 
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import com.mysql.cj.log.Log;
+import edu.uni.administrativestructure.service.UniversityService;
+//import edu.uni.auth.mapper.RoleMapper;
 import edu.uni.example.config.ExampleConfig;
-import edu.uni.userBaseInfo1.bean.Student;
-import edu.uni.userBaseInfo1.bean.StudentExample;
+import edu.uni.place.service.FieldService;
+import edu.uni.professionalcourses.service.SpecialtyService;
+import edu.uni.userBaseInfo1.bean.*;
 import edu.uni.userBaseInfo1.mapper.StudentMapper;
-import edu.uni.userBaseInfo1.service.StudentService;
+import edu.uni.userBaseInfo1.mapper.UserMapper;
+import edu.uni.userBaseInfo1.service.*;
+import edu.uni.userBaseInfo1.utils.userinfoTransMapBean;
+import edu.uni.utils.LogUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Author laizhouhao
@@ -21,13 +32,129 @@ import java.util.List;
 @SuppressWarnings("ALL")
 @Service
 public class StudentServiceImpl implements StudentService {
+    private LogUtils logUilts = new LogUtils(this.getClass());
+
     //持久层接口的对象
     @Autowired
     private StudentMapper studentMapper;  //爆红时由于编译器问题，不影响运行
+    @Autowired
+    private UserMapper userMapper;
+//    @Autowired
+//    private RoleMapper roleMapper;
+    @Autowired
+    private ApprovalStepInchargeService approvalStepInchargeService;
+    @Autowired
+    private UserinfoApplyApprovalService userinfoApplyApprovalService;
+    @Autowired
+    private ApprovalMainService approvalMainService;
+    @Autowired
+    private UniversityService universityService;
+    @Autowired
+    private UserinfoApplyService userinfoApplyService;
+    @Autowired
+    private SpecialtyService specialtyService;
+    @Autowired
+    private PoliticalAffiliationService politicalAffiliationService;
+    @Autowired
+    private FieldService fieldService;
+    @Autowired
+    private AddressService addressService;
+    @Autowired
+    private OtherFieldService otherFieldService;
+    @Autowired
+    private OtherUniversityService otherUniversityService;
+    @Autowired
+    private EcommService ecommService;
+    @Autowired
+    private OtherClassService otherClassService;
+
 
     //配置类，规定了上传文件的路径和分页查询每一页的记录数
     @Autowired
     private ExampleConfig config;
+
+    /**
+     * Author: mokuanyuan 20:02 2019/6/9
+     * @param map
+     * @param userId
+     * @apiNote: 把student对象里的id信息内容查询出来，并把相应的信息放进map里
+     */
+    public void selectByUserIdToMap(HashMap map , Student student){
+        map.put("student_no",student.getStuNo());
+        map.put("begin_learn", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(student.getBeginLearnDate()));
+        map.put("grade",student.getGrade());
+        map.put("specialty", specialtyService.select(student.getSpecialtyId()).getName());
+        map.put("political", politicalAffiliationService.selectPoliticalAffiliationById(student.getPoliticalId()).getPolitical());
+        map.put("dormitory", fieldService.select(student.getLiveRoom()).getName());
+        map.put("class",otherClassService.select(student.getClassId()).getName());
+
+    }
+
+    /**
+     * Author: mokuanyuan 14:52 2019/6/12
+     * @param oldId
+     * @param newId
+     * @return boolean 操作结果
+     * @apiNote: 当审批的最后一步都通过后进行的操作，把相应的信息记录进行更新操作
+     */
+    public boolean updateForApply(Long oldId,Long newId){
+        boolean result = false;
+        Student newStudent = selectById(newId);
+        if(oldId != null){
+            Student oldStudent = selectById(oldId);
+            oldStudent.setId(newId);
+            newStudent.setId(oldId);
+            if( update(oldStudent) && update(newStudent) )
+                result = true;
+        }else{
+            newStudent.setDeleted(false);
+            if( update(newStudent) )
+                result = true;
+        }
+        return result;
+    }
+
+    /**
+     * Author: mokuanyuan 16:55 2019/6/13
+     * @param map
+     * @param student
+     * @param oldId
+     * @param newId
+     * @param loginUser
+     * @param modifiedUser
+     * @return boolean
+     * @apiNote: 用户点击申请时进行的一些系列为了创建申请记录所做的准备
+     */
+   /* @Override
+    public boolean readyForApply(HashMap<String, Object> map, Student student, Long oldId, Long newId, edu.uni.auth.bean.User loginUser, User modifiedUser) {
+        userinfoTransMapBean.transMap2Bean((Map) map.get("applyStudent"),student);
+        //检验是否把该获取的信息都获取到了
+        if(Student.isValidForApply(student) == false )
+            return false;
+        boolean result = false;
+        if(student.getId() != -1){  //不是-1代表原本有旧数据
+            Student oldStudent = selectById(student.getId());
+            Student.copyPropertiesForApply(student,oldStudent);
+            student.setByWho(loginUser.getId()); //写入者为申请修改者
+            oldId = oldStudent.getId();
+            result = insert(student);
+            newId = student.getId();
+
+        }
+        else{ //一般来说不会单独添加学生信息的，就算是添加一个学生信息也只能通过批量增加学生的方法添加
+//                    student.setUserId(modifiedUser.getId());
+//                    student.setUniversityId(modifiedUser.getUniversityId());
+//                    student.setDatetime(new Date());
+//                    student.setByWho(loginUser.getId());
+//                    student.setDeleted(true);
+//                    studentService.insert(student);
+//                    newId = student.getId();
+//                    flag = 1;
+            return false;
+        }
+        return result;
+
+    }*/
 
     /**
      * Author: laizhouhao 10:14 2019/4/30
@@ -66,15 +193,14 @@ public class StudentServiceImpl implements StudentService {
      * Author: laizhouhao 18:34 2019/5/6
      * @param user_id
      * @return List<Student>
-     * @apiNote: 根据用户id查找学生信息
+     * @apiNote: 根据用户id查找有效的学生信息
      */
     @Override
     public List<Student> selectByUserId(Long user_id) {
         StudentExample studentExample = new StudentExample();
-        studentExample.createCriteria().andUserIdEqualTo(user_id).andDeletedEqualTo(false);
-
+        studentExample.createCriteria().andUserIdEqualTo(user_id)
+                .andDeletedEqualTo(false);
         return studentMapper.selectByExample(studentExample);
-
     }
 
     /**
@@ -151,8 +277,8 @@ public class StudentServiceImpl implements StudentService {
         StudentExample studentExample = new StudentExample();
         studentExample.createCriteria().andStuNoEqualTo(stu_no).andDeletedEqualTo(false);
         List<Student> students = studentMapper.selectByExample(studentExample);
-        Long user_id = students.get(0).getUserId();
-        return user_id;
+        //查找出有结果则返回userId，没有则返回null
+        return students.size()>=1?students.get(0).getUserId():null;
     }
 
     /**
@@ -169,4 +295,109 @@ public class StudentServiceImpl implements StudentService {
                 .andDeletedEqualTo(false);
         return studentMapper.selectByExample(studentExample);
     }
+
+
+    /**
+     * Author: mokuanyuan 18:33 2019/6/11
+     * @param student
+     * @param userInfo_apply
+     * @return boolean
+     * @apiNote: 用户点击申请修改学生主要信息
+     */
+    /*@Override
+    public boolean clickApplyStudent(Student student , UserinfoApply userInfo_apply) {
+        //旧记录id
+        Long oldId = student.getId();
+        //将要插入的记录设置为无效
+        student.setDeleted(true);
+        //将新纪录插入student表
+        studentMapper.insert(student);
+        //设置用户信息申请种类  学生信息的信息种类为6
+        userInfo_apply.setInfoType(6);
+        //设置新旧记录的记录id
+        userInfo_apply.setOldInfoId(oldId);
+        userInfo_apply.setNewInfoId(student.getId());
+
+        boolean createApply = userinfoApplyService.createForApply(userInfo_apply, 0);
+
+        //向审批流程表插入一条数据
+        UserinfoApplyApproval applyApproval = new UserinfoApplyApproval();
+        boolean createApplyApproval = userinfoApplyApprovalService.createForApply(applyApproval, userInfo_apply);
+
+        if(createApply == false)
+            logUilts.warn("创建申请表记录失败");
+        if(createApplyApproval == false)
+            logUilts.warn("创建申请流程表记录失败");
+
+        System.out.println(userInfo_apply + "\n" + applyApproval);
+
+        return createApply && createApplyApproval ;
+    }*/
+
+    /**
+     * Author: chenenru 15:44 2019/5/16
+     * @param  student_id
+     * @return Student
+     * @apiNote: 根据学生id获取学生实体信息
+     */
+    @Override
+    public Student selectValidStudentByStuId(Long student_id) {
+        StudentExample studentExample = new StudentExample();
+        studentExample.createCriteria().andIdEqualTo(student_id).andDeletedEqualTo(false);
+        List<Student> studentList = new ArrayList<>();
+        studentList = studentMapper.selectByExample(studentExample);
+        return studentList==null?null:studentList.get(0);
+    }
+
+    /**
+     * Author: laizhouhao 21:33 2019/6/2
+     * @param stu_no
+     * @return 学生实体
+     * @apiNote: 根据学号获取学生实体
+     */
+    @Override
+    public Student selectValidStuByStuNo(String stu_no) {
+        //构造查询条件
+        StudentExample studentExample = new StudentExample();
+        studentExample.createCriteria().andStuNoEqualTo(stu_no).andDeletedEqualTo(false);
+        List<Student> studentList = studentMapper.selectByExample(studentExample);
+        return studentList.size()>=1?studentList.get(0):null;
+    }
+
+    /**
+     * Author: laizhouhao 18:55 2019/6/10
+     * @param studentList
+     * @return 用户的有效的学生信息详情
+     * @apiNote: 根据用户的学生实体获取用户的所有有效的学生信息详情
+     */
+    /*@Override
+    public void getStudent(HashMap<String, Object> map, List<Student> studentList) {
+        //获取用户的学生信息详情，并将放入map中
+        for (int i=0; i<studentList.size(); i++){
+            //判断该学生信息是否有效，有效则加入
+            if(studentList.get(i).getDeleted() == false){
+                map.put("id", studentList.get(i).getId());
+                map.put("University", otherUniversityService.selectValidById(studentList.get(i).getUniversityId()).getName());
+                map.put("StudentNo", studentList.get(i).getStuNo());
+                map.put("BeginLearnDate",new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+                        .format(studentList.get(i).getBeginLearnDate()));
+                map.put("Grade", studentList.get(i).getGrade());
+                map.put("Sprcialty", specialtyService.selectValidSpeciatyById(studentList.get(i).getSpecialtyId()).get(0).getName());
+                map.put("Class", otherClassService.selectClassByClassId(studentList.get(i).getClassId()).getName());
+                map.put("Politicial", politicalAffiliationService
+                        .selectPoliticalAffiliationById(studentList.get(i).getPoliticalId()).getPolitical());
+                map.put("Field", otherFieldService.selectById(studentList.get(i).getLiveRoom()).getName());
+                //查找该用户的详细地址
+                List<Address> addressList = new ArrayList<>();
+                addressList.add(addressService.selectById(studentList.get(i).getHomeAddressId()));
+                //存放地址
+                HashMap<String, Object> addrMap = new HashMap<>();
+                addressService.getAddress(addrMap, addressList);
+                map.put("Address",addrMap.get("CurAddr"));
+
+                map.put("Ecomm", ecommService.selectById(studentList.get(i).getPhoneEcommId()).getContent());
+            }
+        }
+    }*/
+
 }

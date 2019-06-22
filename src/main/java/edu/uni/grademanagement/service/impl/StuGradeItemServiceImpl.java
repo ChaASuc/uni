@@ -6,7 +6,9 @@ import edu.uni.grademanagement.constants.RoleConstant;
 import edu.uni.grademanagement.dto.StuGradeItemDto;
 import edu.uni.grademanagement.form.UpdateStuGradeMainForm;
 import edu.uni.grademanagement.mapper.CourseItemMapper;
+import edu.uni.grademanagement.mapper.StuItemGradeDetailMapper;
 import edu.uni.grademanagement.mapper.StuItemGradeMapper;
+import edu.uni.grademanagement.service.StuGradeItemDetailService;
 import edu.uni.grademanagement.service.StuGradeItemService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,6 +37,9 @@ public class StuGradeItemServiceImpl implements StuGradeItemService {
     @Autowired
     private StuItemGradeMapper stuItemGradeMapper;
 
+    @Autowired
+    private StuGradeItemDetailService stuGradeItemDetailService;
+
 
 
     @Override
@@ -47,17 +53,8 @@ public class StuGradeItemServiceImpl implements StuGradeItemService {
      */
     public List<StuGradeItemDto> selectByStuGradeMainId(Long stuGradeMainId,
                                                         Integer flag) {
-        StuItemGradeExample stuItemGradeExample = new StuItemGradeExample();
-        StuItemGradeExample.Criteria criteria = stuItemGradeExample.createCriteria()
-                .andStuGradeMainIdEqualTo(stuGradeMainId)
-                .andDeletedEqualTo(GradeConstant.RECORD_VALID);
-        if (flag == null) {
-            criteria.andCacheEqualTo(GradeConstant.CACHE_INVALID);
-        }
-        List<StuItemGrade> stuItemGrades = stuItemGradeMapper.selectByExample(stuItemGradeExample);
-        if (CollectionUtils.isEmpty(stuItemGrades)) {
-            return null;
-        }
+        List<StuItemGrade> stuItemGrades = getStuItemGrades(stuGradeMainId, flag);
+        if (stuItemGrades == null) return null;
         List<StuGradeItemDto> stuGradeItemDtos = stuItemGrades.stream().map(
                 stuItemGrade -> {
                     StuGradeItemDto stuGradeItemDto = new StuGradeItemDto();
@@ -68,6 +65,73 @@ public class StuGradeItemServiceImpl implements StuGradeItemService {
                 }
         ).collect(Collectors.toList());
         return stuGradeItemDtos;
+    }
+
+    private List<StuItemGrade> getStuItemGrades(Long stuGradeMainId, Integer flag) {
+        StuItemGradeExample stuItemGradeExample = new StuItemGradeExample();
+        StuItemGradeExample.Criteria criteria = stuItemGradeExample.createCriteria()
+                .andStuGradeMainIdEqualTo(stuGradeMainId)
+                .andDeletedEqualTo(GradeConstant.RECORD_VALID);
+        if (flag == null || flag == RoleConstant.EMPLOYEE_EXINCLUDE_TEACHER) {
+            criteria.andCacheEqualTo(GradeConstant.CACHE_INVALID);
+        }
+        List<StuItemGrade> stuItemGrades = stuItemGradeMapper.selectByExample(stuItemGradeExample);
+        if (CollectionUtils.isEmpty(stuItemGrades)) {
+            return null;
+        }
+        return stuItemGrades;
+    }
+
+    @Override
+
+    /**
+     * @Param: [stuGradeMainId, flag]
+     * @Return:java.util.List<edu.uni.grademanagement.bean.StuItemGrade>
+     * @Author: 陈汉槟
+     * @Date: 2019/6/16 16:48
+     * @Description: 不同角色获取相应成绩项目
+     */
+    public void rebulidStuGradeItemSelective(
+            Long stuGradeMainId, Long rebulidStuGradeMainId, Integer flag) {
+        List<StuItemGrade> stuItemGrades = getStuItemGrades(stuGradeMainId, flag);
+        stuItemGrades.stream().forEach(
+                stuItemGrade -> {
+                    Long stuItemGradeId = stuItemGrade.getId();
+                    stuItemGrade.setId(null);
+                    stuItemGrade.setScore(0D);
+                    stuItemGrade.setNote(null);
+                    stuItemGrade.setCache(GradeConstant.CACHE_VALID);
+                    stuItemGrade.setStuGradeMainId(rebulidStuGradeMainId);
+                    int success = stuItemGradeMapper.insertSelective(stuItemGrade);
+                    if (success == 0) {
+                        throw new RuntimeException("重修成绩项目失败");
+                    }
+
+                    Long courseItemId = stuItemGrade.getCourseItemId();
+                    Integer cache = stuItemGrade.getCache();
+                    StuItemGradeExample stuItemGradeExample =
+                            new StuItemGradeExample();
+                    stuItemGradeExample.createCriteria()
+                            .andStuGradeMainIdEqualTo(rebulidStuGradeMainId)
+                            .andCourseItemIdEqualTo(courseItemId)
+//                            .andCacheEqualTo(cache)
+                            .andDeletedEqualTo(GradeConstant.RECORD_VALID);
+                    List<StuItemGrade> stuItemGradeList =
+                            stuItemGradeMapper.selectByExample(stuItemGradeExample);
+
+                    if (CollectionUtils.isEmpty(stuItemGradeList) ||
+                            stuItemGradeList.size() != 1) {
+                        log.info("【重修成绩项目】获取成绩项失败，stuItemGrade ");
+                        throw new RuntimeException("重修成绩项目失败");
+                    }
+
+                    Long rebulidStuItemGradeId = stuItemGradeList.get(0).getId();
+
+                    stuGradeItemDetailService.rebulidStuGradeItemDetail(
+                            stuItemGradeId, rebulidStuItemGradeId, RoleConstant.TEACHER
+                    );
+                }
+        );
     }
 
     @Override
@@ -127,12 +191,14 @@ public class StuGradeItemServiceImpl implements StuGradeItemService {
      * @Date: 2019/5/9 22:27
      * @Description: 根据成绩主表id何课程成绩项id获取成绩项
      */
-    public StuItemGrade selectStuItemGradeByStuGradeMainId(Long stuGradeMainId, Long courseItemId) {
+    public StuItemGrade selectStuItemGradeByStuGradeMainIdAndCourseItemId(
+            Long stuGradeMainId, Long courseItemId) {
         StuItemGradeExample stuItemGradeExample = new StuItemGradeExample();
-        stuItemGradeExample.createCriteria()
+        StuItemGradeExample.Criteria criteria = stuItemGradeExample.createCriteria()
                 .andStuGradeMainIdEqualTo(stuGradeMainId)
                 .andCourseItemIdEqualTo(courseItemId)
                 .andDeletedEqualTo(GradeConstant.RECORD_VALID);
+
         List<StuItemGrade> stuItemGrades = stuItemGradeMapper.selectByExample(stuItemGradeExample);
         if (CollectionUtils.isEmpty(stuItemGrades)) {
             return null;
@@ -182,7 +248,7 @@ public class StuGradeItemServiceImpl implements StuGradeItemService {
     public boolean updateStuItemGrade(StuItemGrade stuItemGrade) {
         int update = stuItemGradeMapper.updateByPrimaryKeySelective(stuItemGrade);
         if (update == 0) {
-            return false;
+            throw new RuntimeException("成绩项更新失败");
         }
         return true;
     }
@@ -264,7 +330,7 @@ public class StuGradeItemServiceImpl implements StuGradeItemService {
      * @Description: 根据学校id，课程成绩项id，教师id，学生主表id 创建成绩项
      */
     public boolean insertStuGradeItemByExcelContent(
-            Long universityId, Long courseItemId, Long teacherId, Long stuGradeMainId) {
+            Long universityId, Long courseItemId, Long teacherId, Long stuGradeMainId) throws SQLException {
         StuItemGrade stuItemGrade = new StuItemGrade();
         stuItemGrade.setUniversityId(universityId);
         stuItemGrade.setStuGradeMainId(stuGradeMainId);
@@ -273,7 +339,7 @@ public class StuGradeItemServiceImpl implements StuGradeItemService {
         int i = stuItemGradeMapper.insertSelective(stuItemGrade);
         if (i == 0) {
             // todo 插入错误，优化：异常
-            return false;
+            throw new SQLException("成绩项插入失败");
         }
         return true;
     }
@@ -284,13 +350,35 @@ public class StuGradeItemServiceImpl implements StuGradeItemService {
      *
      * @Param [stuItemGradeId]
      * @Return:edu.uni.grademanagement.bean.StuItemGrade
-     * @Author: deschen
+     * @Author: 陈汉槟
      * @Date: 2019/5/21 13:56
      * @Description: 根据成绩项id获取成绩项
      */
     public StuItemGrade selectByStuItemGradeId(Long stuItemGradeId) {
         StuItemGrade stuItemGrade = stuItemGradeMapper.selectByPrimaryKey(stuItemGradeId);
         return stuItemGrade;
+    }
+
+    @Override
+
+    /**
+     * @Param: [stuGradeMainId]
+     * @Return:java.util.List<java.lang.Long>
+     * @Author: 陈汉槟
+     * @Date: 2019/6/4 12:59
+     * @Description: 更新成绩项为不缓存状态
+     */
+    @Transactional
+    public void updateStuItemGradeStateToCacheInvalid(Long stuGradeMainId) {
+        StuItemGrade stuItemGrade = new StuItemGrade();
+        stuItemGrade.setCache(GradeConstant.CACHE_INVALID);
+        StuItemGradeExample stuItemGradeExample = new StuItemGradeExample();
+        stuItemGradeExample.createCriteria()
+                .andStuGradeMainIdEqualTo(stuGradeMainId);
+        int success = stuItemGradeMapper.updateByExampleSelective(stuItemGrade, stuItemGradeExample);
+        if (success == 0) {
+            throw new RuntimeException("成绩项更新失败");
+        }
     }
 
 

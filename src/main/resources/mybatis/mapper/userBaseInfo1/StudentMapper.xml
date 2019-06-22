@@ -77,7 +77,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List" >
-    id, user_id, university_id, stu_no, begin_learn_date, grade, specialty_id, class_id,
+    id, user_id, university_id, stu_no, begin_learn_date, grade, specialty_id, class_id, 
     political_id, live_room, home_address_id, phone_ecomm_id, datetime, by_who, deleted
   </sql>
   <select id="selectByExample" resultMap="BaseResultMap" parameterType="edu.uni.userBaseInfo1.bean.StudentExample" >
@@ -95,7 +95,7 @@
     </if>
   </select>
   <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long" >
-    select
+    select 
     <include refid="Base_Column_List" />
     from student
     where id = #{id,jdbcType=BIGINT}
@@ -114,16 +114,16 @@
     <selectKey resultType="java.lang.Long" keyProperty="id" order="AFTER" >
       SELECT LAST_INSERT_ID()
     </selectKey>
-    insert into student (user_id, university_id, stu_no,
-    begin_learn_date, grade, specialty_id,
-    class_id, political_id, live_room,
-    home_address_id, phone_ecomm_id, datetime,
-    by_who, deleted)
-    values (#{userId,jdbcType=BIGINT}, #{universityId,jdbcType=BIGINT}, #{stuNo,jdbcType=VARCHAR},
-    #{beginLearnDate,jdbcType=TIMESTAMP}, #{grade,jdbcType=CHAR}, #{specialtyId,jdbcType=BIGINT},
-    #{classId,jdbcType=BIGINT}, #{politicalId,jdbcType=BIGINT}, #{liveRoom,jdbcType=BIGINT},
-    #{homeAddressId,jdbcType=BIGINT}, #{phoneEcommId,jdbcType=BIGINT}, #{datetime,jdbcType=TIMESTAMP},
-    #{byWho,jdbcType=BIGINT}, #{deleted,jdbcType=BIT})
+    insert into student (user_id, university_id, stu_no, 
+      begin_learn_date, grade, specialty_id, 
+      class_id, political_id, live_room, 
+      home_address_id, phone_ecomm_id, datetime, 
+      by_who, deleted)
+    values (#{userId,jdbcType=BIGINT}, #{universityId,jdbcType=BIGINT}, #{stuNo,jdbcType=VARCHAR}, 
+      #{beginLearnDate,jdbcType=TIMESTAMP}, #{grade,jdbcType=CHAR}, #{specialtyId,jdbcType=BIGINT}, 
+      #{classId,jdbcType=BIGINT}, #{politicalId,jdbcType=BIGINT}, #{liveRoom,jdbcType=BIGINT}, 
+      #{homeAddressId,jdbcType=BIGINT}, #{phoneEcommId,jdbcType=BIGINT}, #{datetime,jdbcType=TIMESTAMP}, 
+      #{byWho,jdbcType=BIGINT}, #{deleted,jdbcType=BIT})
   </insert>
   <insert id="insertSelective" parameterType="edu.uni.userBaseInfo1.bean.Student" >
     <selectKey resultType="java.lang.Long" keyProperty="id" order="AFTER" >
@@ -281,20 +281,20 @@
   <update id="updateByExample" parameterType="map" >
     update student
     set id = #{record.id,jdbcType=BIGINT},
-    user_id = #{record.userId,jdbcType=BIGINT},
-    university_id = #{record.universityId,jdbcType=BIGINT},
-    stu_no = #{record.stuNo,jdbcType=VARCHAR},
-    begin_learn_date = #{record.beginLearnDate,jdbcType=TIMESTAMP},
-    grade = #{record.grade,jdbcType=CHAR},
-    specialty_id = #{record.specialtyId,jdbcType=BIGINT},
-    class_id = #{record.classId,jdbcType=BIGINT},
-    political_id = #{record.politicalId,jdbcType=BIGINT},
-    live_room = #{record.liveRoom,jdbcType=BIGINT},
-    home_address_id = #{record.homeAddressId,jdbcType=BIGINT},
-    phone_ecomm_id = #{record.phoneEcommId,jdbcType=BIGINT},
-    datetime = #{record.datetime,jdbcType=TIMESTAMP},
-    by_who = #{record.byWho,jdbcType=BIGINT},
-    deleted = #{record.deleted,jdbcType=BIT}
+      user_id = #{record.userId,jdbcType=BIGINT},
+      university_id = #{record.universityId,jdbcType=BIGINT},
+      stu_no = #{record.stuNo,jdbcType=VARCHAR},
+      begin_learn_date = #{record.beginLearnDate,jdbcType=TIMESTAMP},
+      grade = #{record.grade,jdbcType=CHAR},
+      specialty_id = #{record.specialtyId,jdbcType=BIGINT},
+      class_id = #{record.classId,jdbcType=BIGINT},
+      political_id = #{record.politicalId,jdbcType=BIGINT},
+      live_room = #{record.liveRoom,jdbcType=BIGINT},
+      home_address_id = #{record.homeAddressId,jdbcType=BIGINT},
+      phone_ecomm_id = #{record.phoneEcommId,jdbcType=BIGINT},
+      datetime = #{record.datetime,jdbcType=TIMESTAMP},
+      by_who = #{record.byWho,jdbcType=BIGINT},
+      deleted = #{record.deleted,jdbcType=BIT}
     <if test="_parameter != null" >
       <include refid="Update_By_Example_Where_Clause" />
     </if>

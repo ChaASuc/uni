@@ -28,4 +28,6 @@ public interface ClassmatePositionMapper {
     int updateByPrimaryKeySelective(ClassmatePosition record);
 
     int updateByPrimaryKey(ClassmatePosition record);
+    //通过position_id=25 查找到classmate_id 放在list里
+    List<ClassmatePosition> selectClassmateIdByPositionId(Long id);
 }

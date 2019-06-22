@@ -240,4 +240,10 @@
       deleted = #{deleted,jdbcType=BIT}
     where id = #{id,jdbcType=BIGINT}
   </update>
+  <select id="selectClassmateIdByPositionId"  resultMap="BaseResultMap"  >
+    select
+    classmate_id
+    from classmate_position
+    where position_id = #{id,jdbcType=BIGINT} and deleted = 0
+  </select>
 </mapper>

@@ -8,10 +8,36 @@ package edu.uni.userBaseInfo1.service;
 
 import com.github.pagehelper.PageInfo;
 import edu.uni.userBaseInfo1.bean.Ecomm;
+import edu.uni.userBaseInfo1.utils.UserInfo;
+import edu.uni.userBaseInfo1.bean.RequestMessage;
 
+import java.util.HashMap;
 import java.util.List;
 
 public interface EcommService {
+
+    /**
+     * Author: mokuanyuan 14:52 2019/6/12
+     * @param oldId
+     * @param newId
+     * @return boolean 操作结果
+     * @apiNote: 当审批的最后一步都通过后进行的操作，把相应的信息记录进行更新操作
+     */
+    public boolean updateForApply(Long oldId, Long newId);
+
+    /**
+     * Author: mokuanyuan 16:55 2019/6/13
+     * @param map
+     * @param ecomm
+     * @param oldId
+     * @param newId
+     * @param loginUser
+     * @param modifiedUser
+     * @return boolean
+     * @apiNote: 用户点击申请时进行的一些系列为了创建申请记录所做的准备
+     */
+//    public boolean readyForApply(HashMap<String, Object> map, Ecomm ecomm, Long oldId, Long newId,
+//                                 edu.uni.auth.bean.User loginUser, edu.uni.userBaseInfo1.bean.User modifiedUser);
 
     /**
      * Author: mokuanyuan 10:13 2019/4/26
@@ -50,7 +76,7 @@ public interface EcommService {
      * @return boolean
      * @apiNote : 用于增加Ecomm表的一个记录
      */
-    boolean insert(Ecomm ecomm);
+    int insert(Ecomm ecomm);
 
     /**
      * Author: mokuanyuan 21:08 2019/4/24
@@ -76,5 +102,27 @@ public interface EcommService {
      */
     List<Ecomm> selectValidEcomByUserId(Long user_id);
 
+    /**
+     * Author: laizhouhao 18:35 2019/5/13
+     * @param requestMessage
+     * @return boolean
+     * @apiNote: 用户点击申请修改通信方式
+     */
+//    boolean clickApplyEcomm(RequestMessage requestMessage);
 
+    /**
+     * Author: mokuanyuan 20:03 2019/5/13
+     * @param userInfo
+     * @param user_id
+     * @apiNote: 根据用户id查询电子通信方式，并把结果赋值到工具类UserInfo的相应属性中
+     */
+    public void getEcommByUserIdToUserInfo(UserInfo userInfo, Long user_id);
+
+    /**
+     * Author: laizhouhao 20:21 2019/6/9
+     * @param ecommList
+     * @return 用户通信方式
+     * @apiNote: 根据用户id获取用户的通信方式
+     */
+    public void getUserEcomm(HashMap<String, Object> map, List<Ecomm> ecommList);
 }

@@ -1,3 +1,4 @@
+
 package edu.uni.professionalcourses.bean;
 
 import java.util.ArrayList;

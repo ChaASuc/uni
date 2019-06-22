@@ -1,11 +1,9 @@
 package edu.uni.userBaseInfo1.service;
 
 import com.github.pagehelper.PageInfo;
-import edu.uni.userBaseInfo1.bean.Student;
-import edu.uni.userBaseInfo1.bean.StudentExample;
-import edu.uni.userBaseInfo1.bean.StudentRelation;
-import edu.uni.userBaseInfo1.bean.StudentRelationExample;
+import edu.uni.userBaseInfo1.bean.*;
 
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -77,13 +75,61 @@ public interface StudentRelationService {
          * @apiNote: 根据自定义条件查询StudentRelation表的一个记录
          */
         List<StudentRelation> selectByExample(StudentRelationExample studentRelationExample);
-        
+
         /**
          * Author: laizhouhao 15:07 2019/5/8
          * @param user_id
          * @return List<StudentRelation>
-         * @apiNote: 根据用户id查询所有的亲属信息
+         * @apiNote: 根据用户id查询所有有效的亲属信息
          */
-        List<StudentRelation> selectRelaByUserId(Long user_id);
+        List<StudentRelation> selectValidRelaByUserId(Long user_id);
 
+        /**
+         * Author: chenenru 16:21 2019/5/10
+         * @param relaId
+         * @return user_id
+         * @apiNote: 根据亲属用户id查询孩子用户id
+         */
+        StudentRelation selectUserIdByRelaId(Long relaId);
+
+//        /**
+//         * Author: laizhouhao 15:18 2019/5/14
+//         * @param requestMessage
+//         * @return boolean
+//         * @apiNote: 用户点击申请修改亲属信息
+//         */
+//        boolean clickApplyStudentRelation(RequestMessage requestMessage);
+
+        /**
+         * Author: mokuanyuan 16:55 2019/6/13
+         *
+         * @param map
+         * @param studentRelation
+         * @param oldId
+         * @param newId
+         * @param loginUser
+         * @param modifiedUser
+         * @return boolean
+         * @apiNote: 用户点击申请时进行的一些系列为了创建申请记录所做的准备
+         */
+//        public boolean readyForApply(HashMap<String, Object> map, StudentRelation studentRelation, Long oldId,
+//                                     Long newId, edu.uni.auth.bean.User loginUser, User modifiedUser);
+
+
+        /**
+         * Author: mokuanyuan 14:52 2019/6/12
+         * @param oldId
+         * @param newId
+         * @return boolean 操作结果
+         * @apiNote: 当审批的最后一步都通过后进行的操作，把相应的信息记录进行更新操作
+         */
+        public boolean updateForApply(Long oldId, Long newId);
+
+        /**
+         * Author: laizhouhao 15:58 2019/6/10
+         * @param studentRelationList
+         * @return 用户的亲属信息
+         * @apiNote: 根据用户的亲属实体获取用户所有亲属的详细信息
+         */
+        void getStuRelationInfo(HashMap<String, Object> map, List<StudentRelation> studentRelationList);
 }

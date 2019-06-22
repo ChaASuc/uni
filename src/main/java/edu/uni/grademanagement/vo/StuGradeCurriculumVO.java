@@ -17,12 +17,9 @@ public class StuGradeCurriculumVO implements Serializable {
     /*学校id和名*/
     private Long universityId;
 
-    private String universityName;
-
     /*学期id和名*/
     private Long semesterId;
 
-    private String semesterName;
 
     /*班级id和名和编号和学生人数*/
     private Long classId;
@@ -40,6 +37,14 @@ public class StuGradeCurriculumVO implements Serializable {
 
     private String courseNumber;
 
+    private Long speciesId;
+
+    private String speciesName;
+
+    private Long categoryId;
+
+    private String categoryName;
+
 
     /*考试通过和不通过人数*/
     private Integer stuGradeSuccessNumber;
@@ -49,7 +54,6 @@ public class StuGradeCurriculumVO implements Serializable {
     //教师ID
     private Long teacherId;
 
-    private String teacherName;
 
 
 }

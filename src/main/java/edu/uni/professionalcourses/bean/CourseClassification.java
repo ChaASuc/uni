@@ -1,5 +1,7 @@
 package edu.uni.professionalcourses.bean;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.util.Date;
 
 public class CourseClassification {
@@ -49,6 +51,7 @@ public class CourseClassification {
         this.ename = ename == null ? null : ename.trim();
     }
 
+    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")
     public Date getDatetime() {
         return datetime;
     }

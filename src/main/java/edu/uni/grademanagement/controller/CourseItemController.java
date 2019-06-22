@@ -1,23 +1,16 @@
 package edu.uni.grademanagement.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import edu.uni.administrativestructure.service.UniversityService;
 import edu.uni.bean.Result;
 import edu.uni.bean.ResultType;
+import edu.uni.educateAffair.service.SemesterService;
 import edu.uni.example.bean.Product;
 import edu.uni.example.controller.ProductController;
 import edu.uni.grademanagement.bean.*;
 import edu.uni.grademanagement.dto.CourseItemDto;
-import edu.uni.grademanagement.dto.StuGradeItemDetailDto;
-import edu.uni.grademanagement.dto.StuGradeItemDto;
-import edu.uni.grademanagement.form.CreateCousrseItemDetailForm;
-import edu.uni.grademanagement.form.CreateCousrseItemForm;
-import edu.uni.grademanagement.form.DeletedCourseItemDtoForm;
-import edu.uni.grademanagement.mapper.CourseItemDetailMapper;
-import edu.uni.grademanagement.mapper.CourseItemMapper;
-import edu.uni.grademanagement.service.CourseItemService;
-import edu.uni.grademanagement.service.StuGradeItemDetailService;
-import edu.uni.grademanagement.service.StuGradeItemService;
-import edu.uni.grademanagement.service.StuGradeMainService;
+import edu.uni.grademanagement.service.*;
+import edu.uni.professionalcourses.bean.Course;
 import edu.uni.utils.JsonUtils;
 import edu.uni.utils.RedisCache;
 import io.swagger.annotations.Api;
@@ -26,6 +19,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.scripting.xmltags.ForEachSqlNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.CollectionUtils;
@@ -33,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -44,9 +39,9 @@ import java.util.function.DoubleBinaryOperator;
  * @Description 课程成绩项目控制层(所有角色)
  * @Since 1.0.0
  */
-@Api(value = "CourseItemController", tags = {"课程成绩项目控制层"})
+@Api(value = "CourseItemController",description = "课程成绩项目控制层")
 @Controller
-@RequestMapping("/json/gradeManagement")
+@RequestMapping("/json/gradeManagement/courseItemDto")
 @Slf4j
 public class CourseItemController {
 
@@ -61,6 +56,18 @@ public class CourseItemController {
 
     @Autowired
     private StuGradeMainService stuGradeMainService;
+
+    @Autowired
+    private CurriculumForGradeService curriculumForGradeService;
+
+    @Autowired
+    private CourseForGradeService courseForGradeService;
+
+    @Autowired
+    private UniversityService universityService;
+
+    @Autowired
+    private EducateAffairService educateAffairService;
 
 
     @Autowired
@@ -89,15 +96,15 @@ public class CourseItemController {
      * @Date: 2019/5/8 1:03
      * @Description: 根据学校id，教师id，课程id获取课程成绩项
      */
-    @ApiOperation(value = "获取课程成绩项", tags = {"获取有效信息", "教师角色", "可用"}, notes = "可有可无参数")
-    @GetMapping("/courseItemDto/list/{universityId}/{teacherId}/{courseId}")
+    @ApiOperation(value = "获取课程项", notes = "任课教师角色")
+    @GetMapping("/list/{universityId}/{semesterId}/{courseId}")
     public void getCourseItemDtos(
             @ApiParam(value = "学校id", required = true)
-                    @PathVariable(name = "universityId", required = true) long universityId,
-            @ApiParam(value = "教师id", required = true)
-                    @PathVariable(name = "teacherId", required = true) Long teacherId,
+            @PathVariable(name = "universityId", required = true) Long universityId,
+            @ApiParam(value = "学期id", required = true)
+            @PathVariable(name = "semesterId", required = true) Long semesterId,
             @ApiParam(value = "课程id", required = true)
-                    @PathVariable(name = "courseId", required = true) Long courseId,
+            @PathVariable(name = "courseId", required = true) Long courseId,
             HttpServletResponse response
     ) throws IOException {
 //        // 1 获取key
@@ -105,19 +112,20 @@ public class CourseItemController {
 //                universityId, teacherId, courseId);
         // 2 获取缓存
 //        String courseItemDtoJson = redisCache.get(cacheName);
-        String courseItemDtoJson = null;
+        String json = null;
         // 3 判断是否存在缓存
-        if (courseItemDtoJson == null) {
+        if (json == null) {
             // 3.1 获取数据
-            List<CourseItemDto> courseItemDtos = courseItemService.selectCouseItemDtos(
-                    universityId, teacherId, courseId
+            List<CourseItem> courseItems = courseItemService.selectCouseItems(
+                    universityId, semesterId, courseId
             );
-            courseItemDtoJson = JsonUtils.obj2String(courseItemDtos);
+
+            json = Result.build(ResultType.Success).appendData("courseItems", courseItems).convertIntoJSON();
             // 3.2 缓存
 //            redisCache.set(cacheName, courseItemDtoJson);
         }
         response.setContentType("application/json;charset=utf-8");
-        response.getWriter().write(courseItemDtoJson);
+        response.getWriter().write(json);
     }
 
 
@@ -129,28 +137,32 @@ public class CourseItemController {
      * @Date: 2019/5/8 1:04
      * @Description: 根据课程成绩项目courseItemId获取
      */
-    @ApiOperation(value = "根据课程成绩项目courseItemId获取", tags = {"获取有效信息", "教师角色", "可用"})
-    @GetMapping("/courseItemDtos/{courseItemId}")
+    @ApiOperation(value = "根据课程成绩项目courseItemId获取", notes = "任课老师")
+    @GetMapping("/{courseItemId}/{teacherId}")
     public void getCourseItemDto(
-            @ApiParam(value = "课程成绩项courseItemId", required = true)
-                @PathVariable(name = "courseItemId", required = true) long courseItemId,
+            @ApiParam(value = "courseItemId", required = true)
+            @PathVariable(name = "courseItemId", required = true) Long courseItemId,
+            @ApiParam(value = "teacherId", required = true)
+            @PathVariable(name = "teacherId", required = true) Long teacherId,
             HttpServletResponse response
     ) throws IOException {
         // 1 获取key
-        String cacheName = String.format(CacheNameHelper.CacheNamePrefix,
-                courseItemId);
+//        String cacheName = String.format(CacheNameHelper.CacheNamePrefix,
+//                courseItemId);
         // 2 获取缓存
-        String courseItemDtoJson = redisCache.get(cacheName);
+//        String courseItemDtoJson = redisCache.get(cacheName);
+        String json = null;
         // 3 判断是否存在缓存
-        if (courseItemDtoJson == null) {
+//        if (courseItemDtoJson == null) {
             // 3.1 获取数据
-            CourseItemDto courseItemDto = courseItemService.selectCouseItemDto(courseItemId);
-            courseItemDtoJson = JsonUtils.obj2String(courseItemDto);
+            List<CourseItemDetail> courseItemDetails = courseItemService.selectCourseItemDetailsByCourseItemIdAndTeacherId(
+                    courseItemId, teacherId);
+            json = Result.build(ResultType.Success).appendData("courseItemDetails", courseItemDetails).convertIntoJSON();
             // 3.2 缓存
-            redisCache.set(cacheName, courseItemDtoJson);
-        }
+//            redisCache.set(cacheName, courseItemDtoJson);
+//        }
         response.setContentType("application/json;charset=utf-8");
-        response.getWriter().write(courseItemDtoJson);
+        response.getWriter().write(json);
     }
 
 
@@ -163,7 +175,7 @@ public class CourseItemController {
      * @Date: 2019/5/8 1:05
      * @Description: 根据课程成绩项目courseItem创建
      */
-    @ApiOperation(value = "根据课程成绩项目courseItem创建", tags = {"获取有效信息", "教师角色", "可用"})
+    @ApiOperation(value = "创建课程成绩项目，必须是具体学期的某门课的", notes = "课程组老师")
     @PostMapping("/courseItem")
     @ResponseBody
     public Result createCourseItem(
@@ -178,7 +190,7 @@ public class CourseItemController {
 
             List<CourseItem> courseItemList = courseItemService.selectCouseItems(
                     courseItems.get(0).getUniversityId(),
-                    courseItems.get(0).getByWho(),
+                    courseItems.get(0).getSemesterId(),
                     courseItems.get(0).getCourseId()
             );
 
@@ -191,13 +203,14 @@ public class CourseItemController {
 
                 newRate += courseItem.getRate();
             }
-            if (1 - oleRate - newRate < 0) {
+            double d = 1 - oleRate - newRate;
+            if (d < -0.01) {
                 log.info("【课程成绩项】比率和不为1");
                 return Result.build(ResultType.Failed);
             }
             boolean success = courseItemService.insertCourseItem(courseItems);
             if (success) {
-                redisCache.deleteByPaterm(CourseItemController.CacheNameHelper.List_All_CacheNamePrefix);
+//                redisCache.deleteByPaterm(CourseItemController.CacheNameHelper.List_All_CacheNamePrefix);
                 return Result.build(ResultType.Success);
             } else {
                 return Result.build(ResultType.Failed);
@@ -215,35 +228,63 @@ public class CourseItemController {
      * @Author: 陈汉槟
      * @Date: 2019/5/8 1:07
      * @Description: 根据课程成绩评分项目courseItemDetail创建
+     * @Modify: 修复创建ourseItemDetail集合时courseItemId必须一个的错误
      */
-    @ApiOperation(value = "根据课程成绩评分项目courseItemDetail创建", tags = {"获取有效信息", "教师角色", "可用"})
+    @ApiOperation(value = "根据课程成绩评分项目courseItemDetail创建", notes = "任课老师")
     @PostMapping("/courseItemDetail")
     @ResponseBody
     public Result createCourseItemDetail(
             @ApiParam(value = "courseItemDetails", required = true)
-            @RequestBody List<CourseItemDetail> courseItemDetails,
+            @RequestBody List<CourseItemDto> courseItemDtos,
             HttpServletResponse response
     ) throws IOException {
 
-        if (!CollectionUtils.isEmpty(courseItemDetails)) {
-            Long courseItemId = courseItemDetails.get(0).getCourseItemId();
-            CourseItem courseItem = courseItemService.selectCouseItem(courseItemId);
-            List<CourseItemDetail> courseItemDetailList =
-                    courseItemService.selectCourseItemDetailsByCourseItemId(courseItemId);
-            if (courseItem.getCount() - courseItemDetailList.size() - courseItemDetails.size() < 0) {
-                log.info("【创建课程成绩评分项】失败，数量超标");
+        List<CourseItemDetail> courseItemDetailArrayList = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(courseItemDtos)) {
+            // 遍历运行
+            for (CourseItemDto courseItemDto:
+                 courseItemDtos) {
+                Long courseItemId = courseItemDto.getId();
+                Long teacherId = courseItemDto.getByWho();
+                Long universityId = courseItemDto.getUniversityId();
+                // 要插入的课程评分项
+                List<CourseItemDetail> courseItemDetails =
+                        courseItemDto.getCourseItemDetails();
+                courseItemDetails.stream().forEach(
+                        courseItemDetail -> {
+                            courseItemDetail.setCourseItemId(courseItemId);
+                            courseItemDetail.setByWho(teacherId);
+                            courseItemDetail.setUniversityId(universityId);
+                        }
+                );
+
+                // 获取课程成绩项的次数
+                CourseItem courseItem = courseItemService.selectCouseItem(courseItemId);
+                // 根据课程成绩项的id获取原有的课程评分项
+                List<CourseItemDetail> courseItemDetailList =
+                        courseItemService.selectCourseItemDetailsByCourseItemId(courseItemId);
+                // 判断是否数量超标
+                if (courseItem.getCount() - courseItemDetailList.size() - courseItemDetails.size() < 0) {
+                    log.info(
+                            "【创建课程成绩评分项】失败，数量超标,courseItemId={}," +
+                                    " courseItemDetailSize={}, insertCourseItemDetailSize+{}",
+                            courseItemId, courseItemDetailList.size(), courseItemDetails.size());
+                    return Result.build(ResultType.Failed);
+                }
+
+                courseItemDetailArrayList.addAll(courseItemDetails);
+
+            }
+            // 插入
+            boolean success = false;
+            try {
+                success = courseItemService.insertCourseItemDetails(courseItemDetailArrayList);
+            } catch (SQLException e) {
                 return Result.build(ResultType.Failed);
             }
-            boolean success = courseItemService.insertCourseItemDetails(courseItemDetails);
-            if (success) {
-                redisCache.deleteByPaterm(CourseItemController.CacheNameHelper.List_All_CacheNamePrefix);
-                return Result.build(ResultType.Success);
-            }
 
-            else {
-                return Result.build(ResultType.Failed);
-            }
-
+//            redisCache.deleteByPaterm(CourseItemController.CacheNameHelper.List_All_CacheNamePrefix);
+            return Result.build(ResultType.Success);
         }
         return Result.build(ResultType.ParamError);
     }
@@ -257,37 +298,48 @@ public class CourseItemController {
      * @Date: 2019/5/12 1:07
      * @Description: 根据CourseItemDto批量删除
      */
-    @ApiOperation(value = "根据CourseItemDto批量删除")
-    @DeleteMapping("/courseItemDto")
+    @ApiOperation(value = "根据CourseItemId批量删除", notes = "课程组老师")
+    @DeleteMapping("/courseItem")
     @ResponseBody
-    public Result deletedCourseItemDto(
-            @ApiParam(value = "courseItemDtos", required = true)
-            @RequestBody List<CourseItemDto> courseItemDtos
-            ) {
-        if (!CollectionUtils.isEmpty(courseItemDtos)) {
+    public Result deletedCourseItem(
+            @ApiParam(value = "courseItemIds", required = true)
+            @RequestParam List<Long> courseItemIds
+            ) throws SQLException {
+        if (!CollectionUtils.isEmpty(courseItemIds)) {
 
-            for (CourseItemDto courseItemDto :
-                    courseItemDtos) {
-                if (courseItemDto.getId() != null) {
-                    Boolean bCourseItem
-                            = courseItemService.deleteCourseItem(courseItemDto.getId());
-                    if (!bCourseItem) {
-                        return Result.build(ResultType.Failed);
-                    }
-                    List<CourseItemDetail> courseItemDetails =
-                            courseItemDto.getCourseItemDetails();
-                    for (CourseItemDetail courseItemDetail :
-                            courseItemDetails) {
-                        Boolean bCourseItemDetail =
-                                courseItemService.deleteCourseItemDetail(courseItemDetail.getId());
-                        if (!bCourseItemDetail) {
-                            return Result.build(ResultType.Failed);
-                        }
-                    }
-                }
-            }
-            redisCache.deleteByPaterm(CourseItemController.CacheNameHelper.List_All_CacheNamePrefix);
+            Boolean success = courseItemService.deleteCourseItem(courseItemIds);
+            if (success) {
+//            redisCache.deleteByPaterm(CourseItemController.CacheNameHelper.List_All_CacheNamePrefix);
             return Result.build(ResultType.Success);
+
+            }
+        }
+        return Result.build(ResultType.ParamError);
+    }
+
+    /**
+     *
+     * @Param [courseItemDtos]
+     * @Return:edu.uni.bean.Result
+     * @Author: 陈汉槟
+     * @Date: 2019/5/12 1:07
+     * @Description: 根据CourseItemDto批量删除
+     */
+    @ApiOperation(value = "根据CourseItemDetailId批量删除", notes = "课程组老师")
+    @DeleteMapping("/courseItemDetail")
+    @ResponseBody
+    public Result deletedCourseItemDetail(
+            @ApiParam(value = "courseItemDetailIds", required = true)
+            @RequestParam List<Long> courseItemDetailIds
+    ) throws SQLException {
+        if (!CollectionUtils.isEmpty(courseItemDetailIds)) {
+
+            Boolean success = courseItemService.deleteCourseItemDetail(courseItemDetailIds);
+            if (success) {
+//            redisCache.deleteByPaterm(CourseItemController.CacheNameHelper.List_All_CacheNamePrefix);
+                return Result.build(ResultType.Success);
+
+            }
         }
         return Result.build(ResultType.ParamError);
     }
@@ -302,66 +354,59 @@ public class CourseItemController {
      * @Date: 2019/5/12 1:08
      * @Description: 根据成绩项及明细修改
      */
-    @ApiOperation(value="根据成绩项及明细修改")
-    @PutMapping("/courseItemDto")
+    @ApiOperation(value="课程成绩项修改", notes = "课程组老师")
+    @PutMapping("/courseItem")
     @ResponseBody
-    public Result updateCourseItemDtos(
-            @ApiParam(value = "courseItemDtos", required = true)
-            @RequestBody(required = true) List<CourseItemDto> courseItemDtos
+    public Result updateCourseItem(
+            @ApiParam(value = "courseItem", required = true)
+            @RequestBody(required = true) List<CourseItem> courseItems
     ){
-        if(!CollectionUtils.isEmpty(courseItemDtos)){
+        if(!CollectionUtils.isEmpty(courseItems)){
             double oldRates = 0;  // 判断是否超值
-            List<CourseItem> courseItemList = new ArrayList<>();
-            Long universityId = 0L;
-            Long coureseId = 0L;
-            Long teacherId = 0L;
-            for (CourseItemDto courseItemDto :
-                    courseItemDtos) {
-                Long courseItemId = courseItemDto.getId();
-                if (courseItemId != null) {
-                    CourseItem courseItem = courseItemService.selectCouseItem(courseItemId);
-                    universityId = courseItem.getUniversityId();
-                    coureseId = courseItem.getCourseId();
-                    teacherId = courseItem.getByWho();
-                    courseItemList = courseItemService.selectCouseItems(
-                            universityId,
-                            coureseId,
-                            teacherId
-                    );
-                    break;
-                }
-            }
+
+            CourseItem courseItem1 = courseItems.get(0);
+            Long universityId = courseItem1.getUniversityId();
+            Long teacherId = courseItem1.getByWho();
+            Long courseId = courseItem1.getCourseId();
+            Long semesterId = courseItem1.getSemesterId();
+
+            List<CourseItem> courseItemList =
+                    courseItemService.selectCouseItems(universityId, semesterId, courseId);
+
 
             for (CourseItem courseItem :
                     courseItemList) {
+                // 原先的课程成绩项比率
                 oldRates += courseItem.getRate();
             }
 
-            for (CourseItemDto courseItemDto :
-                    courseItemDtos) {
-
-                if (courseItemDto.getId() != null) {
-                    CourseItem courseItem = courseItemService.selectCouseItem(courseItemDto.getId());
+            for (CourseItem item :
+                    courseItems) {
+                // 替换原有的比率
+                if (item.getRate() != null) {
+                    CourseItem courseItem = courseItemService.selectCouseItem(item.getId());
                     oldRates -= courseItem.getRate();
-                    oldRates += courseItemDto.getRate();
+                    oldRates += item.getRate();
                 }
+
             }
             if (1 - oldRates < 0) {
-                return Result.build(ResultType.Failed);
+                throw new RuntimeException("课程成绩项目比率大于1");
             }
-            boolean success = courseItemService.updateCouseItemDto(courseItemDtos);
+
+            boolean success = courseItemService.updateCouseItem(courseItems);
             if(success){
-                courseItemDtos.stream().forEach(
-                        courseItemDto -> {
-                            if (courseItemDto.getId() != null) {
-                                redisCache.delete(String.format(CacheNameHelper.CacheNamePrefix, courseItemDto.getId()));
+                /*courseItemDtos.stream().forEach(
+                        dto -> {
+                            if (dto.getId() != null) {
+                                // redisCache.delete(String.format(CacheNameHelper.CacheNamePrefix, dto.getId()));
                             }
                         }
-                );
-                redisCache.delete(String.format(CacheNameHelper.List_CacheNamePrefix ,
-                        universityId,
-                        teacherId,
-                        coureseId));
+                );*/
+                // redisCache.delete(String.format(CacheNameHelper.List_CacheNamePrefix ,
+//                        universityId,
+//                        teacherId,
+//                        courseId));
                 return Result.build(ResultType.Success);
             }else{
                 return Result.build(ResultType.Failed);
@@ -370,6 +415,59 @@ public class CourseItemController {
         return Result.build(ResultType.ParamError);
     }
 
+    @ApiOperation(value="课程评分项目修改", notes = "任课老师")
+    @PutMapping("/courseItemDetail")
+    @ResponseBody
+    public Result updateCourseItemDetail(
+            @ApiParam(value = "courseItemDetails", required = true)
+            @RequestBody(required = true) List<CourseItemDetail> courseItemDetails
+    ){
+        if(!CollectionUtils.isEmpty(courseItemDetails)){
+
+            Boolean success = courseItemService.updateCouseItemDetail(courseItemDetails);
+            if(success){
+//                courseItemDtos.stream().forEach(
+//                        dto -> {
+//                            if (dto.getId() != null) {
+//                                // redisCache.delete(String.format(CacheNameHelper.CacheNamePrefix, dto.getId()));
+//                            }
+//                        }
+//                );
+                // redisCache.delete(String.format(CacheNameHelper.List_CacheNamePrefix ,
+//                        universityId,
+//                        teacherId,
+//                        courseId));
+                return Result.build(ResultType.Success);
+            }else{
+                return Result.build(ResultType.Failed);
+            }
+        }
+        return Result.build(ResultType.ParamError);
+    }
+
+
+
+    @ApiOperation(value = "获取某学期课表的课程，semesterId无代表当前学期", notes = "课程组老师,已测试")
+    @GetMapping("/tec/courses")
+    public void getCourses(
+            @RequestParam(required = false) Long semesterId,
+            HttpServletResponse response
+    ) throws IOException {
+
+        if (semesterId == null) {
+            semesterId = 40L;
+        }
+
+        List<Long> courseIds =
+                educateAffairService.selectCourseByTeachingTaskBySemesterId(semesterId);
+
+        List<Course> courses =
+                courseForGradeService.selectCoursesByCourseIds(courseIds);
+
+        String json = Result.build(ResultType.Success).appendData("courses", courses).convertIntoJSON();
+        response.setContentType("application/json;charset=utf-8");
+        response.getWriter().write(json);
+    }
 
 
 }

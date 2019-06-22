@@ -7,7 +7,6 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -30,20 +29,20 @@ public class StuGradeVO implements Serializable {
     @JsonProperty(value = "universityId", required = true)
     private Long universityId;
 
-    @ApiModelProperty(value = "学校名字", name = "universityName",
+    /*@ApiModelProperty(value = "学校名字", name = "universityName",
             notes = "学校名字", required = true)
     @JsonProperty(value = "universityName", required = true)
-    private String universityName;
+    private String universityName;*/
 
     @ApiModelProperty(value = "学期id", name = "semesterId",
             notes = "学期id", required = true)
     @JsonProperty(value = "semesterId", required = true)
     private Long semesterId;
 
-    @ApiModelProperty(value = "学期名", name = "semesterName",
+    /*@ApiModelProperty(value = "学期名", name = "semesterName",
             notes = "学期名", required = true)
     @JsonProperty(value = "semesterName", required = true)
-    private String semesterName;
+    private String semesterName;*/
 
     @ApiModelProperty(value = "学生用户id", name = "studentId",
             notes = "学生用户id", required = true)
@@ -72,6 +71,18 @@ public class StuGradeVO implements Serializable {
     @JsonProperty(value = "className", required = true)
     private String className;
 
+    @ApiModelProperty(value = "班级编号", name = "classCode", required = true)
+    @JsonProperty(value = "classCode", required = true)
+    private String classCode;
+
+    @ApiModelProperty(value = "专业", name = "specialtyName", required = true)
+    @JsonProperty(value = "specialtyName", required = true)
+    private String specialtyName;
+
+    @ApiModelProperty(value = "学院", name = "departmentName", required = true)
+    @JsonProperty(value = "departmentName", required = true)
+    private String departmentName;
+
     @ApiModelProperty(value = "课程id", name = "courseId",
             notes = "课程id", required = true)
     @JsonProperty(value = "courseId", required = true)
@@ -79,11 +90,15 @@ public class StuGradeVO implements Serializable {
 
     @ApiModelProperty(value = "课程编号", name = "number",
             notes = "课程编号", required = true)
-    private String number;
+    private String courseNumber;
 
     @ApiModelProperty(value = "课程名", name = "name",
             notes = "课程名", required = true)
     private String courseName;
+
+    private Integer hour;
+
+    private Float credit;
 
     @ApiModelProperty(value = "课程类别", name = "categoryId",
             notes = "课程类别", required = true)
@@ -121,7 +136,7 @@ public class StuGradeVO implements Serializable {
     @JsonProperty(value = "teacherId", required = true)
     private Long byWho;
 
-    @ApiModelProperty(value = "写入者名", name = "who",
+    /*@ApiModelProperty(value = "写入者名", name = "who",
             notes = "写入者名", required = true)
     @JsonProperty(value = "who", required = true)
     private String who;
@@ -129,7 +144,7 @@ public class StuGradeVO implements Serializable {
     @ApiModelProperty(value = "创建时间", name = "datetime",
             notes = "创建时间",required = true)
     @JsonProperty(value = "datetime", required = true)
-    private Date datetime;
+    private Date datetime;*/
 
     @ApiModelProperty(value = "是否有效", name = "deleted",
             notes = "是否有效",required = true)

@@ -240,4 +240,8 @@
       deleted = #{deleted,jdbcType=BIT}
     where id = #{id,jdbcType=BIGINT}
   </update>
+  <select id="selectBanz" resultType="java.lang.Long" >
+    SELECT student_id
+    FROM `classmate` c1 inner join `classmate_position` c2 on c1.id = c2.classmate_id and c2.position_id=25
+  </select>
 </mapper>

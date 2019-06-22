@@ -28,4 +28,7 @@ public interface GradeConstant {
 
     Integer MAIN_STATE_SECOND_REBUILD = 4;
 
+    Integer APPLY = 0;
+
+    Integer APPROVAL = 1;
 }

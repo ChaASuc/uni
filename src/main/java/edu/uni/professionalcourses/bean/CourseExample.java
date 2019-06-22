@@ -435,6 +435,126 @@ public class CourseExample {
             return (Criteria) this;
         }
 
+        public Criteria andDepartmentIdIsNull() {
+            addCriterion("department_id is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andDepartmentIdIsNotNull() {
+            addCriterion("department_id is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andDepartmentIdEqualTo(Long value) {
+            addCriterion("department_id =", value, "departmentId");
+            return (Criteria) this;
+        }
+
+        public Criteria andDepartmentIdNotEqualTo(Long value) {
+            addCriterion("department_id <>", value, "departmentId");
+            return (Criteria) this;
+        }
+
+        public Criteria andDepartmentIdGreaterThan(Long value) {
+            addCriterion("department_id >", value, "departmentId");
+            return (Criteria) this;
+        }
+
+        public Criteria andDepartmentIdGreaterThanOrEqualTo(Long value) {
+            addCriterion("department_id >=", value, "departmentId");
+            return (Criteria) this;
+        }
+
+        public Criteria andDepartmentIdLessThan(Long value) {
+            addCriterion("department_id <", value, "departmentId");
+            return (Criteria) this;
+        }
+
+        public Criteria andDepartmentIdLessThanOrEqualTo(Long value) {
+            addCriterion("department_id <=", value, "departmentId");
+            return (Criteria) this;
+        }
+
+        public Criteria andDepartmentIdIn(List<Long> values) {
+            addCriterion("department_id in", values, "departmentId");
+            return (Criteria) this;
+        }
+
+        public Criteria andDepartmentIdNotIn(List<Long> values) {
+            addCriterion("department_id not in", values, "departmentId");
+            return (Criteria) this;
+        }
+
+        public Criteria andDepartmentIdBetween(Long value1, Long value2) {
+            addCriterion("department_id between", value1, value2, "departmentId");
+            return (Criteria) this;
+        }
+
+        public Criteria andDepartmentIdNotBetween(Long value1, Long value2) {
+            addCriterion("department_id not between", value1, value2, "departmentId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSpecialtyIdIsNull() {
+            addCriterion("specialty_id is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andSpecialtyIdIsNotNull() {
+            addCriterion("specialty_id is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andSpecialtyIdEqualTo(Long value) {
+            addCriterion("specialty_id =", value, "specialtyId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSpecialtyIdNotEqualTo(Long value) {
+            addCriterion("specialty_id <>", value, "specialtyId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSpecialtyIdGreaterThan(Long value) {
+            addCriterion("specialty_id >", value, "specialtyId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSpecialtyIdGreaterThanOrEqualTo(Long value) {
+            addCriterion("specialty_id >=", value, "specialtyId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSpecialtyIdLessThan(Long value) {
+            addCriterion("specialty_id <", value, "specialtyId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSpecialtyIdLessThanOrEqualTo(Long value) {
+            addCriterion("specialty_id <=", value, "specialtyId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSpecialtyIdIn(List<Long> values) {
+            addCriterion("specialty_id in", values, "specialtyId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSpecialtyIdNotIn(List<Long> values) {
+            addCriterion("specialty_id not in", values, "specialtyId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSpecialtyIdBetween(Long value1, Long value2) {
+            addCriterion("specialty_id between", value1, value2, "specialtyId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSpecialtyIdNotBetween(Long value1, Long value2) {
+            addCriterion("specialty_id not between", value1, value2, "specialtyId");
+            return (Criteria) this;
+        }
+
         public Criteria andSpeciesIdIsNull() {
             addCriterion("species_id is null");
             return (Criteria) this;

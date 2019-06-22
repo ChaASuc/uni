@@ -1,10 +1,10 @@
 package edu.uni.professionalcourses.mapper;
 
-import java.util.List;
-
 import edu.uni.professionalcourses.bean.CourseSpecies;
 import edu.uni.professionalcourses.bean.CourseSpeciesExample;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 public interface CourseSpeciesMapper {
     int countByExample(CourseSpeciesExample example);

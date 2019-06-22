@@ -6,6 +6,7 @@ import edu.uni.grademanagement.bean.StuItemGradeDetail;
 import edu.uni.grademanagement.dto.StuGradeItemDetailDto;
 import edu.uni.grademanagement.form.UpdateStuGradeMainForm;
 
+import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -70,7 +71,7 @@ public interface StuGradeItemDetailService {
      * @return
      * @description 根据学生成绩项评分项集合更新
      */
-    boolean updateStuItemGradeDetails(List<StuItemGradeDetail> stuItemGradeDetails);
+    boolean updateStuItemGradeDetails(List<StuItemGradeDetail> stuItemGradeDetails) throws SQLException;
 
 
     /**
@@ -92,7 +93,7 @@ public interface StuGradeItemDetailService {
      * @description 根据学校id，课程评分项id，教师id，成绩项id, 分数，评论创建成绩作业项
      */
     boolean insertStuGradeItemByExcelContent(Long stuItemGradeId, Long courseItemDetailId, Long universityId, Long teacherId,
-                                             double score, String note);
+                                             double score, String note) throws SQLException;
 
     /**
      *
@@ -101,7 +102,8 @@ public interface StuGradeItemDetailService {
      * @return
      * @description: 根据成绩项id，课程评分项id获取成绩作业项
      */
-    StuItemGradeDetail selectByStuItemGradeIdAndCourseItemDetailId(Long stuItemGradeId, Long courseItemDetailId);
+    StuItemGradeDetail selectByStuItemGradeIdAndCourseItemDetailId(
+            Long stuItemGradeId, Long courseItemDetailId, Integer cache);
 
     /**
      *
@@ -119,4 +121,11 @@ public interface StuGradeItemDetailService {
      * @Description: 根据成绩明细id获取成绩评分项
      */
     StuItemGradeDetail selectByStuItemGradeDetailId(Long stuItemGradeDetailId);
+
+    void updateStuGradeItemDetailStateToCacheInvalid(List<Long> stuItemGradeIds);
+
+    void updateStuItemGradeDetail(StuItemGradeDetail stuItemGradeDetail);
+
+    void rebulidStuGradeItemDetail(
+            Long stuItemGradeId, Long rebulidStuItemGradeId, Integer teacher);
 }

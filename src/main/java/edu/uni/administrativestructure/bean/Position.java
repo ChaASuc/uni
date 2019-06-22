@@ -1,5 +1,7 @@
 package edu.uni.administrativestructure.bean;
 
+import com.alibaba.excel.annotation.ExcelProperty;
+import com.alibaba.excel.metadata.BaseRowModel;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.util.Date;
@@ -10,14 +12,18 @@ import java.util.Date;
  * modified:2019.5.9
  * 功能：岗位信息实体类
  */
-public class Position {
+public class Position extends BaseRowModel {
     //    主id
+    @ExcelProperty(value = "岗位信息id",index = 0)
     private Long id;
     //    学校id
+    @ExcelProperty(value = "学校id",index = 1)
     private Long universityId;
     //    岗位名称
+    @ExcelProperty(value = "岗位名称",index = 2)
     private String name;
     //    岗位英文名
+    @ExcelProperty(value = "岗位英文名",index = 3)
     private String ename;
     //    录入日期
     private Date datetime;

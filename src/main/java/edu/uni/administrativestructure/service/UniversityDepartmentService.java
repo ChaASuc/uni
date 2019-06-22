@@ -8,6 +8,7 @@ import java.util.List;
 /**
  * author：黄育林
  * create: 2019.4.26
+ * modified:2019.5.7
  * 功能：学校部门关系接口
  */
 public interface UniversityDepartmentService {

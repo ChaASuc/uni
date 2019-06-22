@@ -2,6 +2,7 @@ package edu.uni.administrativestructure.service.impl;
 
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import edu.uni.administrativestructure.ExcelBean.ExcelSubdepartment;
 import edu.uni.administrativestructure.bean.DepartmentSubdepartment;
 import edu.uni.administrativestructure.bean.DepartmentSubdepartmentExample;
 import edu.uni.administrativestructure.bean.Subdepartment;
@@ -10,15 +11,21 @@ import edu.uni.administrativestructure.config.administrativeStructureConfig;
 import edu.uni.administrativestructure.mapper.DepartmentSubdepartmentMapper;
 import edu.uni.administrativestructure.mapper.SubdepartmentMapper;
 import edu.uni.administrativestructure.service.SubdepartmentService;
+import edu.uni.administrativestructure.utils.ExcelUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * author：黄育林
  * create: 2019.4.20
- * modified: 2019.5.9
+ * modified: 2019.5.17
  * 功能：三级部门实现类
  */
 @Service
@@ -121,6 +128,16 @@ public class SubdepartmentServiceImpl implements SubdepartmentService {
     }
 
     @Override
+    public List<Subdepartment> selectLikeName(String name) {
+        //筛选出有效记录
+        SubdepartmentExample example = new SubdepartmentExample();
+        SubdepartmentExample.Criteria criteria = example.createCriteria();
+        criteria.andNameLike("%"+name+"%").andDeletedEqualTo(false);
+        List<Subdepartment> subdepartments = subdepartmentMapper.selectByExample(example);
+        return subdepartments;
+    }
+
+    @Override
     public PageInfo<Subdepartment> selectPage(int pageNum) {
         PageHelper.startPage(pageNum, globalConfig.getPageSize());    // 开启分页查询，第一次切仅第一次查询时生效
         //筛选条件
@@ -175,4 +192,57 @@ public class SubdepartmentServiceImpl implements SubdepartmentService {
         else
             return null;
     }
+
+    /**
+     * excel导入
+     * @param savePath
+     * @param file
+     * @return
+     * @throws IOException
+     */
+    @Override
+    public int uploadSubdepartment(String savePath, MultipartFile file) throws IOException {
+        //先保存文件到本地
+        saveFile(savePath,file);
+        int i = 0;
+        //解析excel
+        List<ExcelSubdepartment> data = ExcelUtil.readExcel(file.getInputStream(), ExcelSubdepartment.class);
+        // 插入数据库
+        for(ExcelSubdepartment s: data){
+            Subdepartment subdepartment= new Subdepartment();
+            subdepartment.setUniversityId(s.getUniversityId());
+            subdepartment.setDepartmentId(s.getDepartmentId());
+            subdepartment.setName(s.getName());
+            subdepartment.setEname(s.getEname());
+            subdepartment.setTelephone(s.getTelephone());
+            subdepartment.setHead(s.getHead());
+            subdepartment.setOfficeRoom(s.getOfficeRoom());
+            subdepartment.setDatetime(new Date());
+            subdepartment.setByWho(1L);
+            subdepartment.setDeleted(false);
+            if(subdepartmentMapper.insert(subdepartment)>0){
+                i++;
+            }
+        }
+        return i;
+    }
+
+    /**
+     * 保存文件
+     * @param path
+     * @param file
+     * @throws IOException
+     */
+    private void saveFile(String path, MultipartFile file) throws IOException {
+        System.out.println(path);
+        final String p = "excel";
+        File dir = new File(path,p);
+        if(!dir.exists()){
+            dir.mkdir();
+        }
+        String imgName = UUID.randomUUID().toString()+file.getOriginalFilename();
+        File upload = new File(dir,imgName);
+//        FileUtils.copyInputStreamToFile(file.getInputStream(),upload);
+    }
+
 }

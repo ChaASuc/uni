@@ -5,6 +5,7 @@ import edu.uni.grademanagement.bean.CourseItemDetail;
 import edu.uni.grademanagement.dto.CourseItemDto;
 import edu.uni.grademanagement.dto.StuGradeItemDto;
 
+import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -56,7 +57,7 @@ public interface CourseItemService {
      * @return
      * @Descriptino 创建课程成绩评分项
      */
-    Boolean insertCourseItemDetails(List<CourseItemDetail> courseItemDetails);
+    Boolean insertCourseItemDetails(List<CourseItemDetail> courseItemDetails) throws SQLException;
 
 
     /**
@@ -69,28 +70,28 @@ public interface CourseItemService {
 
 
     /**
-     * @param courseItemDetail
+     * @param courseItemDetails
      * @return
      * @description 更新课程成绩项
      */
-    Boolean updateCouseItemDetail(CourseItemDetail courseItemDetail);
+    Boolean updateCouseItemDetail(List<CourseItemDetail> courseItemDetails);
 
 
     /**
      *
-     * @param courseItemId
+     * @param courseItemIds
      * @return
      * @description 删除课程成绩项及其组成
      */
-    Boolean deleteCourseItem(Long courseItemId);
+    Boolean deleteCourseItem(List<Long> courseItemIds) throws SQLException;
 
     /**
      *
-     * @param courseItemDetailId
+     * @param courseItemDetailIds
      * @return
      * @description 删除课程成绩项目
      */
-    Boolean deleteCourseItemDetail(Long courseItemDetailId);
+    Boolean deleteCourseItemDetail(List<Long> courseItemDetailIds) throws SQLException;
 
 
     /**
@@ -122,10 +123,33 @@ public interface CourseItemService {
     /**
      *
      * @param universityId
-     * @param byWho
      * @param courseId
      * @return
-     * @Description 根据学校id教师id和课程获取这个教师教的课的课程成绩项
+     * @Description 根据学校id学期id和课程id获取这学期的课程成绩项
+     * @Modify 2019/6/12 17:39
      */
-    List<CourseItem> selectCouseItems(Long universityId, Long byWho, Long courseId);
+    List<CourseItem> selectCouseItems(
+            Long universityId, Long semesterId, Long courseId);
+
+    /**
+     * @param courseItemId
+     * @return
+     * @Description 根据课程成绩项id删除所属课程评分项目
+     */
+    Boolean deleteCourseItemDetailsByCourseItemId(Long courseItemId);
+
+    /**
+     *
+     * @param id
+     * @return
+     * @Description 根据课程评分项id获取课程成绩项
+     */
+    CourseItem selectCourseItemByCourseItemDetailId(Long id);
+
+    boolean updateCouseItem(List<CourseItem> courseItems);
+
+    List<CourseItemDetail> selectCourseItemDetailsByCourseItemIdAndTeacherId(Long courseItemId, Long teacherId);
+
+    CourseItemDetail selectCourseItemDetailByCouserItemDetailId(Long courseItemDetailId);
+
 }

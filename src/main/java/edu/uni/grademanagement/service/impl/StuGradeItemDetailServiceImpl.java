@@ -7,6 +7,7 @@ import edu.uni.grademanagement.form.UpdateStuGradeMainForm;
 import edu.uni.grademanagement.mapper.CourseItemDetailMapper;
 import edu.uni.grademanagement.mapper.StuItemGradeDetailMapper;
 import edu.uni.grademanagement.service.StuGradeItemDetailService;
+import edu.uni.grademanagement.utils.FileNameUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -63,6 +65,11 @@ public class StuGradeItemDetailServiceImpl implements StuGradeItemDetailService 
                     StuGradeItemDetailDto stuGradeItemDetailDto = new StuGradeItemDetailDto();
                     BeanUtils.copyProperties(stuItemGradeDetail, stuGradeItemDetailDto);
 
+                    String attachment = stuGradeItemDetailDto.getAttachment();
+                    if (attachment != null) {
+                        attachment = new FileNameUtil(attachment).getFileName();
+                        stuGradeItemDetailDto.setAttachment(attachment);
+                    }
                     CourseItemDetail courseItemDetail =
                             courseItemDetailMapper.selectByPrimaryKey(stuItemGradeDetail.getCourseItemDetailId());
                     /* // todo 优化 成绩作业项一定有课程成绩评分项目
@@ -106,7 +113,7 @@ public class StuGradeItemDetailServiceImpl implements StuGradeItemDetailService 
     public boolean insertStuItemGradeDetail(StuItemGradeDetail stuItemGradeDetail) {
         int i = stuItemGradeDetailMapper.insertSelective(stuItemGradeDetail);
         if (i == 0) {
-            return false;
+            throw new RuntimeException("成绩项明细创建失败");
         }
         return true;
     }
@@ -152,12 +159,12 @@ public class StuGradeItemDetailServiceImpl implements StuGradeItemDetailService 
      * @Description: 根据学生成绩项评分项集合更新
      */
     @Transactional
-    public boolean updateStuItemGradeDetails(List<StuItemGradeDetail> stuItemGradeDetails) {
+    public boolean updateStuItemGradeDetails(List<StuItemGradeDetail> stuItemGradeDetails) throws SQLException {
         for (StuItemGradeDetail stuItemGradeDetail :
                 stuItemGradeDetails) {
             int update = stuItemGradeDetailMapper.updateByPrimaryKeySelective(stuItemGradeDetail);
             if (update == 0) {
-                return false;
+                throw new SQLException("成绩项更新失败");
             }
         }
         return true;
@@ -215,7 +222,7 @@ public class StuGradeItemDetailServiceImpl implements StuGradeItemDetailService 
      * @Description: 根据学校id，课程评分项id，教师id，成绩项idd 创建成绩作业项
      */
     public boolean insertStuGradeItemByExcelContent(Long stuItemGradeId, Long courseItemDetailId, Long universityId,
-                                                    Long teacherId, double score, String note) {
+                                                    Long teacherId, double score, String note) throws SQLException {
         StuItemGradeDetail stuItemGradeDetail = new StuItemGradeDetail();
         stuItemGradeDetail.setUniversityId(universityId);
         stuItemGradeDetail.setCourseItemDetailId(courseItemDetailId);
@@ -227,7 +234,7 @@ public class StuGradeItemDetailServiceImpl implements StuGradeItemDetailService 
         if (i != 0) {
             return true;
         }
-        return false;
+        throw new SQLException("成绩作业项插入失败");
     }
 
     @Override
@@ -240,20 +247,22 @@ public class StuGradeItemDetailServiceImpl implements StuGradeItemDetailService 
      * @Date: 2019/5/12 18:54
      * @Description: 根据成绩项id，课程评分项id获取成绩作业项
      */
-    public StuItemGradeDetail selectByStuItemGradeIdAndCourseItemDetailId(Long stuItemGradeId, Long courseItemDetailId) {
+    public StuItemGradeDetail selectByStuItemGradeIdAndCourseItemDetailId(
+            Long stuItemGradeId, Long courseItemDetailId, Integer cache) {
         StuItemGradeDetailExample stuItemGradeDetailExample =
                 new StuItemGradeDetailExample();
-        stuItemGradeDetailExample.createCriteria()
+        StuItemGradeDetailExample.Criteria criteria = stuItemGradeDetailExample.createCriteria()
                 .andStuItemGradeIdEqualTo(stuItemGradeId)
                 .andCourseItemDetailIdEqualTo(courseItemDetailId)
                 .andDeletedEqualTo(GradeConstant.RECORD_VALID);
+        if (cache != null) {
+            criteria.andCacheEqualTo(cache);
+        }
         List<StuItemGradeDetail> stuItemGradeDetails =
                 stuItemGradeDetailMapper.selectByExample(stuItemGradeDetailExample);
 
-        if (CollectionUtils.isEmpty(stuItemGradeDetails) || stuItemGradeDetails.size() != 1) {
-            log.info("【excel录入成绩失败】根据成绩项id，课程评分项id获取成绩作业项不存在，或多个，" +
-                    "size ={}, stuItemGradeId = {},courseItemDetailId = {}",
-                    stuItemGradeDetails.size(), stuItemGradeId, courseItemDetailId);
+        if (CollectionUtils.isEmpty(stuItemGradeDetails)) {
+            return null;
         }
         return stuItemGradeDetails.get(0);
     }
@@ -291,6 +300,70 @@ public class StuGradeItemDetailServiceImpl implements StuGradeItemDetailService 
         return stuItemGradeDetail;
     }
 
+    @Override
+
+    /**
+     * @Param: [stuItemGradeIds]
+     * @Return:void
+     * @Author: 陈汉槟
+     * @Date: 2019/6/4 13:07
+     * @Description: 更新成绩作业项目
+     */
+    @Transactional
+    public void updateStuGradeItemDetailStateToCacheInvalid(List<Long> stuItemGradeIds) {
+        StuItemGradeDetail stuItemGradeDetail = new StuItemGradeDetail();
+        stuItemGradeDetail.setCache(GradeConstant.CACHE_INVALID);
+        StuItemGradeDetailExample stuItemGradeDetailExample = new StuItemGradeDetailExample();
+        stuItemGradeDetailExample.createCriteria().andStuItemGradeIdIn(stuItemGradeIds);
+        int success =
+                stuItemGradeDetailMapper.updateByExampleSelective(stuItemGradeDetail, stuItemGradeDetailExample);
+        if (success == 0) {
+            throw new RuntimeException("成绩作业项目更新失败");
+        }
+    }
+
+    @Override
+
+    /**
+     * @Param: [stuItemGradeDetail]
+     * @Return:void
+     * @Author: 陈汉槟
+     * @Date: 2019/6/4 13:41
+     * @Description: 更新成绩作业项目
+     */
+    public void updateStuItemGradeDetail(StuItemGradeDetail stuItemGradeDetail) {
+        int success = stuItemGradeDetailMapper.updateByPrimaryKeySelective(stuItemGradeDetail);
+        if (success == 0) {
+            throw new RuntimeException("成绩作业项目附件更新失败");
+        }
+    }
+
+    @Override
+    public void rebulidStuGradeItemDetail(
+            Long stuItemGradeId, Long rebulidStuItemGradeId, Integer teacher) {
+        StuItemGradeDetailExample stuItemGradeDetailExample =
+                new StuItemGradeDetailExample();
+        stuItemGradeDetailExample.createCriteria()
+                .andStuItemGradeIdEqualTo(stuItemGradeId)
+                .andDeletedEqualTo(GradeConstant.RECORD_VALID);
+        List<StuItemGradeDetail> stuItemGradeDetails =
+                stuItemGradeDetailMapper.selectByExample(stuItemGradeDetailExample);
+        stuItemGradeDetails.stream().forEach(
+                stuItemGradeDetail -> {
+                    stuItemGradeDetail.setId(null);
+                    stuItemGradeDetail.setAttachment(null);
+                    stuItemGradeDetail.setCache(GradeConstant.CACHE_VALID);
+                    stuItemGradeDetail.setNote(null);
+                    stuItemGradeDetail.setScore(0D);
+                    stuItemGradeDetail.setStuItemGradeId(rebulidStuItemGradeId);
+                    int success = stuItemGradeDetailMapper.insertSelective(stuItemGradeDetail);
+                    if (success == 0) {
+                        throw new RuntimeException("重修成绩明细创建失败");
+                    }
+                }
+        );
+    }
+
 //    @Override
 
     /**
@@ -305,4 +378,5 @@ public class StuGradeItemDetailServiceImpl implements StuGradeItemDetailService 
 
         return false;
     }
+
 }

@@ -29,4 +29,8 @@ public class CourseDto {
     private Long categoryId;
 
     private String categoryName;
+
+    private Integer hour;
+
+    private Float credit;
 }

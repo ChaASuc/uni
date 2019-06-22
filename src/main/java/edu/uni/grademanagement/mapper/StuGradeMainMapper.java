@@ -22,6 +22,8 @@ public interface StuGradeMainMapper {
     @Select("SELECT DISTINCT semester_id FROM stu_grade_main WHERE student_id = #{studentId} AND deleted = #{deleted}")
     List<Long> selectDistinctSemesterId(Long studentId, Integer deleted);
 
+    int insertStuGradeMainsSelective(@Param("records")List<StuGradeMain> records);
+
     int insertStuGradeMains(@Param("records")List<StuGradeMain> records);
 
     List<StuGradeMain> selectByExample(StuGradeMainExample example);

@@ -2,7 +2,9 @@ package edu.uni.userBaseInfo1.service;
 
 import com.github.pagehelper.PageInfo;
 import edu.uni.userBaseInfo1.bean.LearningDegree;
+import edu.uni.userBaseInfo1.bean.RequestMessage;
 
+import java.util.HashMap;
 import java.util.List;
 
 public interface LearningDegreeSerevice {
@@ -64,4 +66,44 @@ public interface LearningDegreeSerevice {
      * @apiNote: 根据职员的id查询有效的学历记录
      */
    /* LearningDegree selectLearingDegreeByEmployeeId(long userId);*/
+
+    /**
+     * Author: laizhouhao 18:13 2019/5/10
+     * @param user_id
+     * @return List<LearningDegree>
+     * @apiNote: 根据用户id获取有效的学历信息
+     */
+    List<LearningDegree> selectValidLeaDeByUserId(Long user_id);
+    /**
+     * Author: chenenru 20:05 2019/5/13
+     * @param 
+     * @return 
+     * @apiNote: 用户点击申请修改学历
+     */
+//    boolean clickApplyLearningDegree(RequestMessage requestMessage);
+
+    /**
+     * Author: mokuanyuan 20:27 2019/6/2
+     * @param map
+     * @param learningDegree
+     * @apiNote: 传入一个HashMap和LearningDegree对象，把LearningDegree里的id字段对应的信息内容放入到map里
+     */
+    public void selectAllInfoToMap(HashMap map, LearningDegree learningDegree);
+
+    /**
+     * Author: mokuanyuan 14:52 2019/6/12
+     * @param oldId
+     * @param newId
+     * @return boolean 操作结果
+     * @apiNote: 当审批的最后一步都通过后进行的操作，把相应的信息记录进行更新操作
+     */
+    public boolean updateForApply(Long oldId, Long newId);
+
+    /**
+     * Author: laizhouhao 16:28 2019/6/10
+     * @param learningDgreeList
+     * @return 用户的学历信息
+     * @apiNote: 根据用户的所有学历信息实体获取用户的所有学历信息详情
+     */
+    void getLearningDegree(HashMap<String, Object> map, List<LearningDegree> learningDgreeList);
 }

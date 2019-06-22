@@ -1,5 +1,6 @@
 package edu.uni.grademanagement.bean;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.uni.grademanagement.constants.GradeConstant;
 
 import java.util.Date;
@@ -23,6 +24,7 @@ public class StuGradeMain {
 
     private Date datetime = new Date();
 
+    @JsonProperty("teacherId")
     private Long byWho;
 
     private Integer deleted;

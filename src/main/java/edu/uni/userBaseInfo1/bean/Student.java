@@ -7,6 +7,7 @@ description：学生主要信息
 package edu.uni.userBaseInfo1.bean;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+//import edu.uni.auth.bean.User;
 
 import java.util.Date;
 /*
@@ -208,4 +209,20 @@ public class Student {
         this.byWho = byWho;
         this.deleted = deleted;
     }
+
+    public static boolean isValidForApply(Student student){
+        return student.getId() != null && student.getStuNo() != null && student.getBeginLearnDate() != null &&
+                student.getGrade() != null && student.getSpecialtyId() != null && student.getClassId() != null &&
+                student.getPoliticalId() != null && student.getLiveRoom() != null;
+    }
+
+    public static void copyPropertiesForApply(Student new_student, Student old_student){
+        new_student.setUniversityId(old_student.getUniversityId());
+        new_student.setUserId(old_student.getUserId());
+        new_student.setHomeAddressId(old_student.getHomeAddressId());
+        new_student.setPhoneEcommId(old_student.getPhoneEcommId());
+        new_student.setDatetime(new Date());
+        new_student.setDeleted(true);
+    }
+
 }
